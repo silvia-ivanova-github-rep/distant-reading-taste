@@ -13,10 +13,10 @@ SPIDER_MODULES = ['DistantReadingTaste.spiders']
 NEWSPIDER_MODULE = 'DistantReadingTaste.spiders'
 
 DB_SETTINGS = {
-   'db': 'my_db',
-   'user': 'root',
+   'db': 'distant_reading_taste',
+   'user': 'jonathan',
    'passwd': '9RxtjYkbb6d%web$',
-   'host': 'localhost'
+   'host': '172.24.96.1'
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

@@ -14,12 +14,8 @@ def cleanse(text):
 
 class RecipesSpider(scrapy.Spider):
     name = "recipes"
-    filename = "recipe_results.txt"
 
     def start_requests(self):
-        # create or overwrite results file
-
-        open(self.filename, "w+").close()
         urls = [
             'https://www.chefkoch.de/rs/s0g31/Fruehstuecksrezepte.html'
         ]
@@ -34,14 +30,14 @@ class RecipesSpider(scrapy.Spider):
         # get infos from overview page
         for overviewRecipe in response.css('article.rsel-item'):
             title = overviewRecipe.css('h2.ds-heading-link::text').get(default='')
-            country = 'DE'
             url = overviewRecipe.css('a.rsel-recipe::attr("href")').get(default='')  # maybe ::first
-            recipe = Recipe(title=title, country=country, url=url)
+            recipe = Recipe(title=title, source_id=1, url=url)
+            yield recipe
 
             items.append(recipe)
             self.logger.info('Added item {}'.format(recipe.items()))
 
-        # next_page = response.css('ul.ds-pagination li.ds-next a::attr("href")').get()
-        # if next_page is not None:
-        #     self.logger.info('Proceeding with next page')
-        #     yield response.follow(next_page, self.parse)
+        next_page = response.css('ul.ds-pagination li.ds-next a::attr("href")').get()
+        if next_page is not None:
+            self.logger.info('Proceeding with next page')
+            yield response.follow(next_page, self.parse)
