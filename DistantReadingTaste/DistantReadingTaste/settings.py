@@ -12,6 +12,12 @@ BOT_NAME = 'DistantReadingTaste'
 SPIDER_MODULES = ['DistantReadingTaste.spiders']
 NEWSPIDER_MODULE = 'DistantReadingTaste.spiders'
 
+DB_SETTINGS = {
+   'db': 'my_db',
+   'user': 'root',
+   'passwd': '9RxtjYkbb6d%web$',
+   'host': 'localhost'
+}
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'DistantReadingTaste (+http://www.yourdomain.com)'
@@ -62,9 +68,9 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'DistantReadingTaste.pipelines.DistantreadingtastePipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'DistantReadingTaste.pipelines.RecipePipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

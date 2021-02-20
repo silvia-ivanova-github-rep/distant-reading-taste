@@ -6,7 +6,11 @@
 import scrapy
 
 
-class DistantreadingtasteItem(scrapy.Item):
+class Recipe(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    title = scrapy.Field()
+    country = scrapy.Field()
+    url = scrapy.Field()
+    content = scrapy.Field()
+    # pass

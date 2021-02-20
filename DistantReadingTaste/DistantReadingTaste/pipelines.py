@@ -8,6 +8,15 @@
 from itemadapter import ItemAdapter
 
 
-class DistantreadingtastePipeline:
+class RecipePipeline:
+    def __init__(self, db, user, passwd, host):
+        self.db = db
+        self.user = user
+        self.passwd = passwd
+        self.host = host
+
+    def open_spider(self, spider):
+        self.conn = "MySQLdb"
+
     def process_item(self, item, spider):
         return item
