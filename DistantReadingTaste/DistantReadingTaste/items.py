@@ -12,5 +12,4 @@ class Recipe(scrapy.Item):
     category = scrapy.Field()
     country = scrapy.Field()
     url = scrapy.Field()
-    content = scrapy.Field()
-    # pass
+    ingredients = scrapy.Field()

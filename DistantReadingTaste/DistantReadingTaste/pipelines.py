@@ -48,6 +48,9 @@ class RecipePipeline:
             item.get("url")
         ))
         self.conn.commit()
+        recipe_id = self.cursor.lastrowid
+        self.save_recipe_ingredients(item.get("ingredients"), recipe_id)
+
         return item
 
     def close_spider(self, spider):
@@ -79,4 +82,18 @@ class RecipePipeline:
             self.conn.commit()
             self.cursor.execute("SELECT * FROM categories WHERE name=\"%s\" LIMIT 1" % (category,))
             result = self.cursor.fetchone()
+        return result['id']
+
+    def save_recipe_ingredients(self, ingredients, recipe_id):
+        for ingredient in ingredients:
+            ingredient_id = self.get_or_create_ingredient(ingredient['ingredient'])
+            amount = ingredient['amount']
+            # split amount
+            # unit_id = self.get_or_create_unit()
+
+    def get_or_create_ingredient(self, ingredient):
+        self.cursor.execute("SELECT * FROM ingredients WHERE name=\"%s\" OR alt_name_1=\"%s\" OR alt_name_2=\"%s\" OR alt_name_3=\"%s\"" % (ingredient, ingredient, ingredient, ingredient))
+        result = self.cursor.fetchone()
+        if result is None:  # ingredient does not yet exist
+            return
         return result['id']

@@ -8,7 +8,8 @@ from ..items import Recipe
 
 def cleanse(text):
     cleansed = re.sub(r'\(.*?\)', '', text)  # remove brackets and content
-    cleansed = cleansed.strip()  # remove trailing whitespaces
+    cleansed = re.sub(r'\s{2,}', '', cleansed)  # remove multiple whitespaces
+    cleansed = cleansed.strip()  # remove preceeding and trailing whitespaces
     return cleansed
 
 
@@ -26,23 +27,45 @@ class RecipesSpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         self.logger.info('Got successful response from {}'.format(response.url))
 
-        country = kwargs['country']
-        source = kwargs['source']
-        category = kwargs['category']
-
-        items = []
-
         # get infos from overview page
         for overviewRecipe in response.css('article.rsel-item'):
             title = overviewRecipe.css('h2.ds-heading-link::text').get(default='')
             url = overviewRecipe.css('a.rsel-recipe::attr("href")').get(default='')
-            recipe = Recipe(title=title, country=country, source=source, category=category, url=url)
-            yield recipe
 
-            items.append(recipe)
-            self.logger.info('Added item {}'.format(recipe.items()))
+            request = scrapy.Request(url, callback=self.parse_recipe, cb_kwargs=dict(main_url=response.url))
+            request.cb_kwargs['title'] = title
+            request.cb_kwargs['country'] = kwargs['country']
+            request.cb_kwargs['source'] = kwargs['source']
+            request.cb_kwargs['category'] = kwargs['category']
+            yield request
 
         # next_page = response.css('ul.ds-pagination li.ds-next a::attr("href")').get()
         # if next_page is not None:
         #     self.logger.info('Proceeding with next page')
         #     yield response.follow(next_page, self.parse)
+
+    def parse_recipe(self, response, **kwargs):
+        self.logger.info('Processing recipe from {}'.format(response.url))
+
+        ingredients = []
+        for ingredientRow in response.css('table.ingredients tr'):
+            amount = ingredientRow.css('td.td-left span::text').get(default='')  # amount + unit
+            ingredient = ingredientRow.css('td.td-right span::text').get(default='')  # ingredient
+            ingredient = cleanse(ingredient)
+            if ingredient == '':
+                ingredient = ingredientRow.css('td.td-right span a::text').get(default='')
+                ingredient = cleanse(ingredient)
+            amount = cleanse(amount)
+            ingredients.append({'ingredient': ingredient, 'amount': amount})
+
+        recipe = Recipe(
+            title=kwargs['title'],
+            country=kwargs['country'],
+            source=kwargs['source'],
+            category=kwargs['category'],
+            url=response.url,
+            ingredients=ingredients
+        )
+
+        # process recipe in pipeline
+        yield recipe
