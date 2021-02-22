@@ -4,10 +4,10 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 
-# useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
-from scrapy.exceptions import NotConfigured
 import MySQLdb
+import time
+# useful for handling different item types with a single interface
+from scrapy.exceptions import NotConfigured
 
 
 class RecipePipeline:
@@ -34,12 +34,16 @@ class RecipePipeline:
                                     passwd=self.passwd,
                                     host=self.host,
                                     charset='utf8', use_unicode=True)
-        self.cursor = self.conn.cursor()
+        self.cursor = self.conn.cursor(MySQLdb.cursors.DictCursor)
 
     def process_item(self, item, spider):
-        sql = "INSERT INTO recipes(source_id, title, url) VALUES (%s, %s, %s)"
+        source_id = self.get_source_id(item.get("source"), item.get("country"))
+        category_id = self.get_category_id(item.get('category'))
+
+        sql = "INSERT INTO recipes(source_id, category_id, title, url) VALUES (%s, %s, %s, %s)"
         self.cursor.execute(sql, (
-            item.get("source_id"),
+            source_id,
+            category_id,
             item.get("title"),
             item.get("url")
         ))
@@ -48,3 +52,31 @@ class RecipePipeline:
 
     def close_spider(self, spider):
         self.conn.close()
+
+    def get_source_id(self, source, country):
+        self.cursor.execute("SELECT * FROM countries WHERE name=\"%s\" LIMIT 1" % (country,))
+        result = self.cursor.fetchone()
+        if result is None:
+            print("ERROR: Country '%s' could not be found in database!" % (country,))
+            return
+        country_id = result['id']
+        self.cursor.execute("SELECT * FROM sources WHERE country_id=\"%s\" AND name=\"%s\" LIMIT 1" % (country_id, source))
+        result = self.cursor.fetchone()
+        if result is None:  # source does not yet exist
+            sql = "INSERT INTO sources(country_id, name, updated_at, created_at) VALUES(%s, %s, %s, %s)"
+            self.cursor.execute(sql, (country_id, source, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
+            self.conn.commit()
+            self.cursor.execute("SELECT * FROM sources WHERE country_id=\"%s\" AND name=\"%s\" LIMIT 1" % (country_id, source))
+            result = self.cursor.fetchone()
+        return result['id']
+
+    def get_category_id(self, category):
+        self.cursor.execute("SELECT * FROM categories WHERE name=\"%s\" LIMIT 1" % (category,))
+        result = self.cursor.fetchone()
+        if result is None:  # category does not yet exist
+            sql = "INSERT INTO categories(name, updated_at, created_at) VALUES(%s, %s, %s)"
+            self.cursor.execute(sql, (category, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
+            self.conn.commit()
+            self.cursor.execute("SELECT * FROM categories WHERE name=\"%s\" LIMIT 1" % (category,))
+            result = self.cursor.fetchone()
+        return result['id']

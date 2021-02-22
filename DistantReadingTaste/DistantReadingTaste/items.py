@@ -8,7 +8,8 @@ import scrapy
 
 class Recipe(scrapy.Item):
     title = scrapy.Field()
-    source_id = scrapy.Field()
+    source = scrapy.Field()
+    category = scrapy.Field()
     country = scrapy.Field()
     url = scrapy.Field()
     content = scrapy.Field()
