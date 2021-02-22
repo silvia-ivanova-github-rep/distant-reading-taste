@@ -7,16 +7,19 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+from .settings_custom import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST
+
 BOT_NAME = 'DistantReadingTaste'
 
 SPIDER_MODULES = ['DistantReadingTaste.spiders']
 NEWSPIDER_MODULE = 'DistantReadingTaste.spiders'
 
+# set database credentials from imported file "settings_custom.py"
 DB_SETTINGS = {
-   'db': 'distant_reading_taste',
-   'user': 'jonathan',
-   'passwd': '9RxtjYkbb6d%web$',
-   'host': '172.26.176.1'
+   'db': DATABASE_NAME,
+   'user': DATABASE_USER,
+   'passwd': DATABASE_PASSWORD,
+   'host': DATABASE_HOST
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
