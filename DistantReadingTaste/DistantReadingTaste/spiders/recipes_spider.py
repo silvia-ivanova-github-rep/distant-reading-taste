@@ -4,6 +4,7 @@ import scrapy
 import re
 
 from ..items import Recipe
+from ..spider_settings import SOURCE_SPECIFICS
 
 
 def cleanse(text):
@@ -11,6 +12,13 @@ def cleanse(text):
     cleansed = re.sub(r'\s{2,}', '', cleansed)  # remove multiple whitespaces
     cleansed = cleansed.strip()  # remove preceeding and trailing whitespaces
     return cleansed
+
+
+def get_css_item(source, element):
+    if source in SOURCE_SPECIFICS and element in SOURCE_SPECIFICS[source]:
+        return SOURCE_SPECIFICS[source][element]
+    else:
+        return None
 
 
 class RecipesSpider(scrapy.Spider):
@@ -27,10 +35,16 @@ class RecipesSpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         self.logger.info('Got successful response from {}'.format(response.url))
 
+        # define source specific css
+        list_items_css = get_css_item(kwargs['source'], 'list-items')
+        list_item_header_css = get_css_item(kwargs['source'], 'list-item-header')
+        list_item_url_css = get_css_item(kwargs['source'], 'list-item-url')
+        list_item_next_css = get_css_item(kwargs['source'], 'list-item-next')
+
         # get infos from overview page
-        for overviewRecipe in response.css('article.rsel-item'):
-            title = overviewRecipe.css('h2.ds-heading-link::text').get(default='')
-            url = overviewRecipe.css('a.rsel-recipe::attr("href")').get(default='')
+        for overviewRecipe in response.css(list_items_css):
+            title = overviewRecipe.css(list_item_header_css).get(default='')
+            url = overviewRecipe.css(list_item_url_css).get(default='')
 
             request = scrapy.Request(url, callback=self.parse_recipe, cb_kwargs=dict(main_url=response.url))
             request.cb_kwargs['title'] = title
@@ -39,7 +53,7 @@ class RecipesSpider(scrapy.Spider):
             request.cb_kwargs['category'] = kwargs['category']
             yield request
 
-        # next_page = response.css('ul.ds-pagination li.ds-next a::attr("href")').get()
+        # next_page = response.css(list_item_next_css).get()
         # if next_page is not None:
         #     self.logger.info('Proceeding with next page')
         #     yield response.follow(next_page, self.parse)
@@ -47,13 +61,19 @@ class RecipesSpider(scrapy.Spider):
     def parse_recipe(self, response, **kwargs):
         self.logger.info('Processing recipe from {}'.format(response.url))
 
+        # define source specific css
+        ingredients_css = get_css_item(kwargs['source'], 'ingredients')
+        ingredient_amount_css = get_css_item(kwargs['source'], 'ingredient-amount')
+        ingredient_name_css = get_css_item(kwargs['source'], 'ingredient-name')
+        ingredient_name_secondary_css = get_css_item(kwargs['source'], 'ingredient-name-secondary')
+
         ingredients = []
-        for ingredientRow in response.css('table.ingredients tr'):
-            amount = ingredientRow.css('td.td-left span::text').get(default='')  # amount + unit
-            ingredient = ingredientRow.css('td.td-right span::text').get(default='')  # ingredient
+        for ingredientRow in response.css(ingredients_css):
+            amount = ingredientRow.css(ingredient_amount_css).get(default='')  # amount + unit
+            ingredient = ingredientRow.css(ingredient_name_css).get(default='')  # ingredient
             ingredient = cleanse(ingredient)
             if ingredient == '':
-                ingredient = ingredientRow.css('td.td-right span a::text').get(default='')
+                ingredient = ingredientRow.css(ingredient_name_secondary_css).get(default='')
                 ingredient = cleanse(ingredient)
             amount = cleanse(amount)
             ingredients.append({'ingredient': ingredient, 'amount': amount})

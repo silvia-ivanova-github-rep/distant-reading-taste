@@ -6,6 +6,7 @@
 
 import MySQLdb
 import time
+import re
 # useful for handling different item types with a single interface
 from scrapy.exceptions import NotConfigured
 
@@ -39,7 +40,6 @@ class RecipePipeline:
     def process_item(self, item, spider):
         source_id = self.get_source_id(item.get("source"), item.get("country"))
         category_id = self.get_category_id(item.get('category'))
-
         sql = "INSERT INTO recipes(source_id, category_id, title, url) VALUES (%s, %s, %s, %s)"
         self.cursor.execute(sql, (
             source_id,
@@ -50,7 +50,6 @@ class RecipePipeline:
         self.conn.commit()
         recipe_id = self.cursor.lastrowid
         self.save_recipe_ingredients(item.get("ingredients"), recipe_id)
-
         return item
 
     def close_spider(self, spider):
@@ -86,14 +85,41 @@ class RecipePipeline:
 
     def save_recipe_ingredients(self, ingredients, recipe_id):
         for ingredient in ingredients:
-            ingredient_id = self.get_or_create_ingredient(ingredient['ingredient'])
-            amount = ingredient['amount']
-            # split amount
-            # unit_id = self.get_or_create_unit()
+            if ingredient['ingredient'] == '':
+                print("ERROR: Ingredient is empty ({})".format(ingredient))
+            else:
+                ingredient_id = self.get_or_create_ingredient(ingredient['ingredient'])
+                if ingredient_id:
+                    amount = self.extract_amount(ingredient['amount'])
+                    unit_id = 0
+                    # split amount
+                    # unit_id = self.get_or_create_unit()
+                    sql = "INSERT INTO recipe_ingredients(recipe_id, ingredient_id, amount, unit_id, updated_at, created_at) VALUES(%s, %s, %s, %s, %s, %s)"
+                    self.cursor.execute(sql, (recipe_id, ingredient_id, amount, unit_id, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
+                    self.conn.commit()
 
     def get_or_create_ingredient(self, ingredient):
-        self.cursor.execute("SELECT * FROM ingredients WHERE name=\"%s\" OR alt_name_1=\"%s\" OR alt_name_2=\"%s\" OR alt_name_3=\"%s\"" % (ingredient, ingredient, ingredient, ingredient))
-        result = self.cursor.fetchone()
-        if result is None:  # ingredient does not yet exist
-            return
-        return result['id']
+        sql = "SELECT * FROM ingredients WHERE name=%s OR alt_name_1=%s OR alt_name_2=%s OR alt_name_3=%s"
+        self.cursor.execute(sql, (ingredient, ingredient, ingredient, ingredient))
+        result = self.cursor.fetchall()
+        if len(result) == 1:  # 1 ingredient found
+            print("INFO: Ingredient with id %s found" % (result[0]['id'],))
+            return result[0]['id']
+        elif len(result) > 1:  # multiple ingredients found
+            print("ERROR: Multiple ingredients found for %s. Skipping..." % (ingredient,))
+            return False
+        else:  # ingredient does not yet exist
+            print("INFO: Ingredient %s does not yet exist. Creating it..." % (ingredient,))
+            sql = "INSERT INTO ingredients(type_id, name, updated_at, created_at) VALUES(%s, %s, %s, %s)"
+            self.cursor.execute(sql, (0, ingredient, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
+            self.conn.commit()
+            self.get_or_create_ingredient(ingredient)
+
+    # TODO: sum up values
+    @staticmethod
+    def extract_amount(text):
+        text = re.sub('½', ' 0.5', text)
+        results = re.findall(r'\d+', text)
+        if results:
+            return results[0]
+        return 1

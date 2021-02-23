@@ -7,14 +7,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-from .settings_custom import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST
+from .credentials import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST
 
 BOT_NAME = 'DistantReadingTaste'
 
 SPIDER_MODULES = ['DistantReadingTaste.spiders']
 NEWSPIDER_MODULE = 'DistantReadingTaste.spiders'
 
-# set database credentials from imported file "settings_custom.py"
+# set database credentials from imported file "credentials.py"
 DB_SETTINGS = {
    'db': DATABASE_NAME,
    'user': DATABASE_USER,
