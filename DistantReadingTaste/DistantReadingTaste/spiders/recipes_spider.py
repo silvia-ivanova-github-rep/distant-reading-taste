@@ -28,6 +28,19 @@ class RecipesSpider(scrapy.Spider):
         data = [
             {'country': 'Deutschland', 'source': 'chefkoch.de', 'category': 'Frühstück', 'url': 'https://www.chefkoch.de/rs/s0g31/Fruehstuecksrezepte.html'},
             {'country': 'Deutschland', 'source': 'chefkoch.de', 'category': 'Dessert', 'url': 'https://www.chefkoch.de/rs/s0g19/Dessert-Rezepte.html'}
+         #  {'country': 'Deutschland', 'source': 'kochbar.de', 'category': 'Hauptgerichte', 'url': 'https://www.kochbar.de/kochen/hauptspeisen-zubereiten-hauptgerichte.html'}
+         #  {'country': 'Deutschland', 'source': 'daskochrezept.de', 'category': 'Hauptgerichte', 'url': 'https://www.daskochrezept.de/suche?search=Hauptgericht'},
+         #  {'country': 'Deutschland', 'source': 'oetker.de', 'category': 'Hauptgerichte', 'url': 'https://www.oetker.de/kochen/hauptspeisen'},
+
+         # {'country': 'Oestereich', 'source': 'gutekueche.at', 'category': 'Hauptspeisen', 'url': 'https://www.gutekueche.at/hauptspeisen-alle-rezepte'},
+         #  {'country': 'Oestereich', 'source': 'kochrezepte.at', 'category': 'Hauptspeisen', 'url': 'https://www.kochrezepte.at/hauptspeisen-rezepte'},
+         #  {'country': 'Oestereich', 'source': 'issgesund.at', 'category': 'Hauptspeisen', 'url': 'https://www.issgesund.at/t/hauptspeisen'},
+         #  {'country': 'Oestereich', 'source': 'steiermark.com', 'category': 'Hauptspeisen', 'url': 'https://www.steiermark.com/de/urlaub/essen-trinken/rezepte?form-area-content-teasergrid-2--category-content-teasergrid-2=677804'},
+
+         #  {'country': 'Schweiz', 'source': 'gutekueche.ch', 'category': 'Hauptspeisen', 'url': 'https://www.gutekueche.ch/hauptspeisen-alle-rezepte'},
+         #  {'country': 'Schweiz', 'source': 'migusto.migros.ch', 'category': 'Hauptgericht', 'url': 'https://migusto.migros.ch/de/s/?q=Hauptgericht'},
+         # {'country': 'Schweiz', 'source': 'fooby.ch', 'category': 'Hauptgericht', 'url': 'https://fooby.ch/de/suche.html?query=hauptgericht&start=0&filters[treffertyp]=rezepte&filters[menuart][0]=hauptgericht&filters[region][0]=schweiz&y=100&x=0'}
+
         ]
         for item in data:
             yield scrapy.Request(url=item['url'], callback=self.parse, cb_kwargs=dict(country=item['country'], source=item['source'], category=item['category']))
