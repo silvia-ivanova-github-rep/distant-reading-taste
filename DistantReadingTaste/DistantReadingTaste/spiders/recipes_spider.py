@@ -14,6 +14,12 @@ def cleanse(text):
     return cleansed
 
 
+def cleanse_ingredient(text):
+    cleansed = cleanse(text)
+    cleansed = re.sub(r',.*', '', cleansed)  # remove ","
+    return cleansed
+
+
 def get_css_item(source, element):
     if source in SOURCE_SPECIFICS and element in SOURCE_SPECIFICS[source]:
         return SOURCE_SPECIFICS[source][element]
@@ -84,10 +90,10 @@ class RecipesSpider(scrapy.Spider):
         for ingredientRow in response.css(ingredients_css):
             amount = ingredientRow.css(ingredient_amount_css).get(default='')  # amount + unit
             ingredient = ingredientRow.css(ingredient_name_css).get(default='')  # ingredient
-            ingredient = cleanse(ingredient)
+            ingredient = cleanse_ingredient(ingredient)
             if ingredient == '':
                 ingredient = ingredientRow.css(ingredient_name_secondary_css).get(default='')
-                ingredient = cleanse(ingredient)
+                ingredient = cleanse_ingredient(ingredient)
             amount = cleanse(amount)
             ingredients.append({'ingredient': ingredient, 'amount': amount})
 
