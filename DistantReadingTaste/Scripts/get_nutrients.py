@@ -48,8 +48,6 @@ cursor.execute("SELECT * FROM ingredients")
 rows = cursor.fetchmany(size=3)
 
 for row in rows:
-    print(row)
-
     if not row['alt_name_1']:
         continue
 

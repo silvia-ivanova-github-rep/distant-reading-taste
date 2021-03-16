@@ -17,6 +17,7 @@ def cleanse(text):
 def cleanse_ingredient(text):
     cleansed = cleanse(text)
     cleansed = re.sub(r',.*', '', cleansed)  # remove ","
+    cleansed = re.sub(r'\soder.*', '', cleansed)  # remove oder
     return cleansed
 
 
