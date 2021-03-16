@@ -48,10 +48,10 @@ cursor.execute("SELECT * FROM ingredients")
 rows = cursor.fetchmany(size=3)
 
 for row in rows:
-    if not row['alt_name_1']:
+    if not row['name_en']:
         continue
 
-    data = get_nutrients(row['alt_name_1'])
+    data = get_nutrients(row['name_en'])
 
     if data['parsed']:
         parsed = data['parsed'][0]
