@@ -50,6 +50,7 @@ class RecipePipeline:
         self.conn.commit()
         recipe_id = self.cursor.lastrowid
         self.save_recipe_ingredients(item.get("ingredients"), recipe_id)
+        self.save_recipe_nutrients(item.get("nutrients"), recipe_id)
         return item
 
     def close_spider(self, spider):
@@ -85,41 +86,69 @@ class RecipePipeline:
 
     def save_recipe_ingredients(self, ingredients, recipe_id):
         for ingredient in ingredients:
-            if ingredient['ingredient'] == '':
+            if ingredient['name'] == '':
                 print("ERROR: Ingredient is empty ({})".format(ingredient))
             else:
-                ingredient_id = self.get_or_create_ingredient(ingredient['ingredient'])
+                ingredient_id = self.get_or_create_ingredient(ingredient['name'])
                 if ingredient_id:
-                    amount = self.extract_amount(ingredient['amount'])
-                    unit_id = 0
-                    # split amount
-                    # unit_id = self.get_or_create_unit()
-                    sql = "INSERT INTO recipe_ingredients(recipe_id, ingredient_id, amount, unit_id, updated_at, created_at) VALUES(%s, %s, %s, %s, %s, %s)"
-                    self.cursor.execute(sql, (recipe_id, ingredient_id, amount, unit_id, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
+                    amount = self.extract_amount(ingredient['quantity'])
+                    unit = self.extract_unit(ingredient['quantity'])
+
+                    sql = "INSERT INTO recipe_ingredients(recipe_id, ingredient_id, amount, unit, updated_at, created_at) VALUES (%s, %s, %s, %s, %s, %s)"
+                    values = (recipe_id, ingredient_id, amount, unit, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S'))
+                    self.cursor.execute(sql, values)
                     self.conn.commit()
+
+    def save_recipe_nutrients(self, nutrients, recipe_id):
+        carbohydrates = ''
+        energy = ''
+        fat = ''
+        protein = ''
+        if 'carbohydrates' in nutrients:
+            carbohydrates = self.extract_amount(nutrients['carbohydrates'])
+        if 'energy' in nutrients:
+            energy = self.extract_amount(nutrients['energy'])
+        if 'fat' in nutrients:
+            fat = self.extract_amount(nutrients['fat'])
+        if 'protein' in nutrients:
+            protein = self.extract_amount(nutrients['protein'])
+        self.cursor.execute("UPDATE recipes SET carbohydrates='%s', energy = '%s', fat = '%s', protein = '%s' WHERE id='%s'" % (carbohydrates, energy, fat, protein, recipe_id))
+        self.conn.commit()
 
     def get_or_create_ingredient(self, ingredient):
         sql = "SELECT * FROM ingredients WHERE name=%s OR alt_name_1=%s OR alt_name_2=%s OR alt_name_3=%s"
         self.cursor.execute(sql, (ingredient, ingredient, ingredient, ingredient))
         result = self.cursor.fetchall()
         if len(result) == 1:  # 1 ingredient found
-            print("INFO: Ingredient with id %s found" % (result[0]['id'],))
+            # print("INFO: Ingredient with id %s found" % (result[0]['id'],))
             return result[0]['id']
         elif len(result) > 1:  # multiple ingredients found
-            print("ERROR: Multiple ingredients found for %s. Skipping..." % (ingredient,))
+            # print("ERROR: Multiple ingredients found for %s. Skipping..." % (ingredient,))
             return False
         else:  # ingredient does not yet exist
-            print("INFO: Ingredient %s does not yet exist. Creating it..." % (ingredient,))
+            # print("INFO: Ingredient %s does not yet exist. Creating it..." % (ingredient,))
             sql = "INSERT INTO ingredients(type_id, name, updated_at, created_at) VALUES(%s, %s, %s, %s)"
             self.cursor.execute(sql, (0, ingredient, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
             self.conn.commit()
             self.get_or_create_ingredient(ingredient)
 
-    # TODO: sum up values
     @staticmethod
     def extract_amount(text):
-        text = re.sub('½', ' 0.5', text)
-        results = re.findall(r'\d+', text)
-        if results:
-            return results[0]
+        text = re.sub(',', '.', text)
+        text = re.sub('½|1/2', ' 0.5', text)
+        text = re.sub('1/3', '0.33', text)
+        text = re.sub('¼|1/4', '0.25', text)
+        text = re.sub('1/5', '0.2', text)
+        text = re.sub('1/6', '0.167', text)
+        text = re.sub('1/8', '0.125', text)
+        text = re.sub('1/10', '0.1', text)
+        results = re.findall(r'\d+(?:\.\d+)?', text)
+        accumulated = sum(map(float, results))
+        if accumulated:
+            return accumulated
         return 1
+
+    @staticmethod
+    def extract_unit(text):
+        results = re.findall(r'[^\d.,\s]+', text)
+        return ' '.join(results)

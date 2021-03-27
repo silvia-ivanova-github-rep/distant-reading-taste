@@ -3,13 +3,30 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+from scrapy.item import Item, Field
 
 
-class Recipe(scrapy.Item):
-    title = scrapy.Field()
-    source = scrapy.Field()
-    category = scrapy.Field()
-    country = scrapy.Field()
-    url = scrapy.Field()
-    ingredients = scrapy.Field()
+class Ingredient(Item):
+    name = Field()
+    quantity = Field()
+
+
+class Nutrients(Item):
+    energy = Field()
+    fat = Field()
+    saturated_fat = Field()
+    sugar = Field()
+    protein = Field()
+    fibre = Field()
+    salt = Field()
+    carbohydrates = Field()
+
+
+class Recipe(Item):
+    title = Field()
+    source = Field()
+    category = Field()
+    country = Field()
+    url = Field()
+    ingredients = Field()
+    nutrients = Field()

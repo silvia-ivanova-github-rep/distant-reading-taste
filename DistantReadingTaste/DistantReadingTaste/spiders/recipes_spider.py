@@ -3,7 +3,7 @@
 import scrapy
 import re
 
-from ..items import Recipe
+from ..items import Recipe, Ingredient, Nutrients
 from ..spider_settings import SOURCE_SPECIFICS
 
 
@@ -18,6 +18,7 @@ def cleanse_ingredient(text):
     cleansed = cleanse(text)
     cleansed = re.sub(r',.*', '', cleansed)  # remove ","
     cleansed = re.sub(r'\soder.*', '', cleansed)  # remove oder
+    cleansed = re.sub(r'\sor.*', '', cleansed)  # remove or
     return cleansed
 
 
@@ -27,14 +28,14 @@ def get_css_item(source, element):
     else:
         return None
 
-
+# https://github.com/mrorii/cookbot/blob/master/cookbot/spiders/allrecipes.py
 class RecipesSpider(scrapy.Spider):
     name = "recipes"
+    download_delay = 1
 
     def start_requests(self):
         data = [
             {'country': 'Deutschland', 'source': 'chefkoch.de', 'category': 'Frühstück', 'url': 'https://www.chefkoch.de/rs/s0g31/Fruehstuecksrezepte.html'},
-            {'country': 'Deutschland', 'source': 'chefkoch.de', 'category': 'Dessert', 'url': 'https://www.chefkoch.de/rs/s0g19/Dessert-Rezepte.html'}
          #  {'country': 'Deutschland', 'source': 'kochbar.de', 'category': 'Hauptgerichte', 'url': 'https://www.kochbar.de/kochen/hauptspeisen-zubereiten-hauptgerichte.html'}
          #  {'country': 'Deutschland', 'source': 'daskochrezept.de', 'category': 'Hauptgerichte', 'url': 'https://www.daskochrezept.de/suche?search=Hauptgericht'},
          #  {'country': 'Deutschland', 'source': 'oetker.de', 'category': 'Hauptgerichte', 'url': 'https://www.oetker.de/kochen/hauptspeisen'},
