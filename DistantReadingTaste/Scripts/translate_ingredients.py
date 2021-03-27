@@ -1,4 +1,5 @@
 import sys
+import time
 import MySQLdb
 
 from googletrans import Translator
@@ -11,14 +12,16 @@ cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 t = Translator()
 
-cursor.execute("SELECT * FROM ingredients")
+cursor.execute("SELECT * FROM ingredients WHERE name_en IS NULL")
 rows = cursor.fetchall()
 for row in rows:
+    time.sleep(0.5)
     name = row['name']
     translated = t.translate(name, src='de', dest='en')
     if translated:
         print(translated.origin, ' > ', translated.text)
-        cursor.execute("UPDATE ingredients SET name_en='%s' WHERE id='%s'" % (translated.text, row['id']))
+        sql = "UPDATE ingredients SET name_en=\"%s\" WHERE id=%s" % (translated.text, row['id'])
+        cursor.execute(sql)
         conn.commit()
 
 conn.close()

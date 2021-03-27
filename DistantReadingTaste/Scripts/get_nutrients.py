@@ -44,8 +44,7 @@ cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 # get ingredients from database
 cursor.execute("SELECT * FROM ingredients")
-# rows = cursor.fetchall()
-rows = cursor.fetchmany(size=3)
+rows = cursor.fetchall()
 
 for row in rows:
     if not row['name_en']:
