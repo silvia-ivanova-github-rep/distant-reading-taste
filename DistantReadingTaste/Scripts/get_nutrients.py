@@ -43,13 +43,14 @@ if conn is None:
 cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 # get ingredients from database
-cursor.execute("SELECT * FROM ingredients")
+cursor.execute("SELECT * FROM ingredients WHERE energy IS NULL")
 rows = cursor.fetchall()
 
 for row in rows:
     if not row['name_en']:
         continue
 
+    time.sleep(0.7)
     data = get_nutrients(row['name_en'])
 
     if data['parsed']:

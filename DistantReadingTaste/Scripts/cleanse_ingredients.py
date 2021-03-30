@@ -33,6 +33,28 @@ def update_ingredient(old_name, new_name):
         conn.commit()
 
 
+def update_ingredient_with_id(ingredient_id, new_name):
+    print(ingredient_id, ' > ', new_name)
+    sql = "SELECT * FROM ingredients WHERE name=%s LIMIT 1"
+    cursor.execute(sql, (new_name,))
+    result = cursor.fetchone()
+    if result is not None:  # target value name already exists
+        sql = "SELECT * FROM ingredients WHERE id=%s LIMIT 1"
+        cursor.execute(sql, (ingredient_id,))
+        row = cursor.fetchone()
+        if row is not None:
+            sql = "UPDATE recipe_ingredients SET ingredient_id=%s WHERE ingredient_id=%s"
+            cursor.execute(sql, (result['id'], row['id']))
+            conn.commit()
+            sql = "DELETE FROM ingredients WHERE id=%s"
+            cursor.execute(sql, (row['id'],))
+            conn.commit()
+    else:
+        sql = "UPDATE ingredients SET name=%s WHERE id=%s"
+        cursor.execute(sql, (new_name, ingredient_id))
+        conn.commit()
+
+
 # cleansing from csv file
 with open('ingredient_data.csv', newline='') as f:
     reader = csv.reader(f)
@@ -128,5 +150,21 @@ for ingredient_row in ingredients:
     if name != cleansed:  # update only if there are changes
         update_ingredient(name, cleansed)
 
+
+with open('ingredient_data_manual.csv', newline='') as f:
+    reader = csv.reader(f)
+    for item in reader:
+        update_ingredient_with_id(item[0], item[2])
+
+# remove ingredient with blank name
+cursor.execute("SELECT * FROM ingredients WHERE name='' LIMIT 1")
+result = cursor.fetchone()
+if result is not None:
+    sql = "DELETE FROM recipe_ingredients WHERE ingredient_id=%s"
+    cursor.execute(sql, (result['id'],))
+    conn.commit()
+    sql = "DELETE FROM ingredients WHERE id=%s"
+    cursor.execute(sql, (result['id'],))
+    conn.commit()
 
 conn.close()
