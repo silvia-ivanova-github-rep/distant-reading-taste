@@ -53,10 +53,11 @@ class ChefkochSpider(CrawlSpider):
             name = ingredientRow.css('td.td-right span::text').get(default='').strip()  # ingredient
             if name == '':
                 name = ingredientRow.css('td.td-right span a::text').get(default='').strip()
-            name = re.sub(r'\(.*?\)|\s{2,}|,.*|\soder|\sor', '', name)  # remove multiple whitespaces, delimiter and brackets and their content
+            name = re.sub(r'\(.*?\)|\s{2,}|,.*|\soder.*', '', name)  # remove multiple whitespaces, delimiter and brackets and their content
             quantity = re.sub(r'\(.*?\)|\s{2,}', '', quantity)  # remove multiple whitespaces and brackets and their content
 
             ingredient['name'] = name
+            ingredient['name_en'] = ''
             ingredient['quantity'] = quantity
             ingredients.append(ingredient)
 
