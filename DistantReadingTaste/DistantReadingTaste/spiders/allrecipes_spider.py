@@ -10,11 +10,21 @@ from ..items import Recipe, Ingredient, Nutrients
 
 class AllrecipesSpider(CrawlSpider):
     name = 'allrecipes'
-    download_delay = 1
+    # download_delay = 1
 
     def start_requests(self):
         data = [
-            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/80/main-dish/?page=2'},  # page 1 has not a "next" button
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/80/main-dish/?page=2'},  # page 1 has no "next" button
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/1642/everyday-cooking/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/236/us-recipes/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/94/soups-stews-and-chili/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/93/seafood/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/95/pasta-and-noodles/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/92/meat-and-poultry/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/17561/lunch/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/84/healthy-recipes/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/17562/dinner/?page=2'},
+            {'category': 'Hauptspeise', 'url': 'https://www.allrecipes.com/recipes/88/bbq-grilling/?page=2'},
         ]
         for item in data:
             yield Request(url=item['url'], callback=self.parse, cb_kwargs=dict(category=item['category']))
@@ -45,18 +55,40 @@ class AllrecipesSpider(CrawlSpider):
         recipe['url'] = response.url
         recipe['country'] = 'USA'
         recipe['source'] = 'allrecipes.com'
+        recipe['category'] = kwargs['category']
 
         ingredients = []
         for ingredientRow in response.css('section.recipe-ingredients-new li.ingredients-item'):
             ingredient = Ingredient()
-            name = ingredientRow.css('span.ingredients-item-name::text').get(default='').strip()  # ingredient
-            name = re.sub(r'\(.*?\)|,.*|\sor', '', name)  # remove delimiter, brackets and their content
-            name = re.sub(r'\s\s+', ' ', name)  # remove multiple whitespaces
+            ingredient_str = ingredientRow.css('span.ingredients-item-name::text').get(default='').strip()  # ingredient
 
-            self.logger.info('INGREDIENT:' + name)
+            ingredient_str = re.sub(r'\(.*?\)', '', ingredient_str)  # remove brackets and their content
 
-            ingredient['name'] = name
-            #ingredient['quantity'] = quantity
+            quantity = ''
+            quantity_search = re.search(r'^[\d\s\.\,\u00BC-\u00BE\u2150-\u215E\u2189\/]+', ingredient_str)
+            if quantity_search:
+                quantity = quantity_search[0].strip()
+                ingredient_str = re.sub(quantity, '', ingredient_str, 1)  # remove quantity from string
+
+            unit = ''
+            units = ['teaspoon', 'tablespoon', 'fluid ounce', 'gill', 'cup', 'pint', 'quart', 'gallon', 'pound', 'ounce', 'milligram', 'milligramme', 'gram', 'gramme',
+                     'kilogram', 'kilogramme', 'deciliter', 'decilitre', 'milliliter', 'millilitre', 'liter', 'litre', 'dL', 'mg', 'g', 'kg', 'ml', 'l', 'L', 'dl', 'lb',
+                     'oz', 't', 'tsp', 'tsp.', 'T', 'tbl', 'tbl.', 'tbs', 'tbs.', 'tbsp', 'tbsp.', 'fl oz', 'c', 'p', 'pt', 'fl pt', 'q', 'qt', 'fl qt', 'gal', 'cc', 'mL']
+            for u in units:
+                unit_search = re.search(rf'\b({u}s?)\b', ingredient_str)
+                if unit_search:
+                    unit = unit_search[0].strip()
+                    ingredient_str = re.sub(unit, '', ingredient_str, 1)  # remove unit from string
+                    break
+
+            ingredient_str = re.sub(r';.*|,.*|\sor.*', ' ', ingredient_str)  # remove everything after delimiters
+            ingredient_str = re.sub(r'\s\s+', ' ', ingredient_str).strip()  # remove multiple whitespaces
+
+            ingredient['name'] = ''
+            ingredient['name_en'] = ingredient_str
+            ingredient['quantity'] = quantity
+            ingredient['unit'] = unit
+            self.logger.info(ingredient)
             ingredients.append(ingredient)
 
         recipe['ingredients'] = ingredients
@@ -79,10 +111,10 @@ class AllrecipesSpider(CrawlSpider):
             elif nutrient_name == 'dietary fiber:':
                 nutrients['fibre'] = nutrient_value
 
+        recipe['nutrients'] = nutrients
+
         self.logger.info(recipe)
-        self.logger.info(ingredients)
-        self.logger.info(nutrients)
 
         # process recipe in pipeline
-        #yield recipe
+        yield recipe
 
