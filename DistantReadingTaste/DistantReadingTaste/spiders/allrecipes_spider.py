@@ -6,10 +6,9 @@ from scrapy.http import Request
 from ..items import Recipe, Ingredient, Nutrients
 
 
-
-
 class AllrecipesSpider(CrawlSpider):
     name = 'allrecipes'
+
     # download_delay = 1
 
     def start_requests(self):
@@ -41,11 +40,11 @@ class AllrecipesSpider(CrawlSpider):
             request.cb_kwargs['category'] = kwargs['category']
             yield request
 
-        # next_page = response.css('a.category-page-list-related-nav-next-button::attr(href)').get()
-        # self.logger.info('NEXT {}'.format(next_page))
-        # if next_page is not None:
-        #     self.logger.info('Proceeding with next page')
-        #     yield response.follow(url=next_page, callback=self.parse, cb_kwargs=dict(category=kwargs['category']))
+        next_page = response.css('a.category-page-list-related-nav-next-button::attr(href)').get()
+        self.logger.info('NEXT {}'.format(next_page))
+        if next_page is not None:
+            self.logger.info('Proceeding with next page')
+            yield response.follow(url=next_page, callback=self.parse, cb_kwargs=dict(category=kwargs['category']))
 
     def parse_recipe(self, response, **kwargs):
         self.logger.info('Got successful response from {}'.format(response.url))
@@ -74,8 +73,8 @@ class AllrecipesSpider(CrawlSpider):
             units = ['teaspoon', 'tablespoon', 'fluid ounce', 'gill', 'cup', 'can', 'bit', 'stalk', 'cube', 'pint', 'pinch', 'pinches', 'quart', 'gallon', 'pound', 'ounce',
                      'milligram', 'milligramme', 'gram', 'gramme', 'kilogram', 'kilogramme', 'deciliter', 'decilitre', 'milliliter', 'millilitre', 'liter', 'litre', 'dL', 'mg',
                      'g', 'kg', 'ml', 'l', 'L', 'dl', 'lb', 'oz', 't', 'tsp', 'tsp.', 'T', 'tbl', 'tbl.', 'tbs', 'tbs.', 'tbsp', 'tbsp.', 'fl oz', 'c', 'p', 'pt', 'fl pt', 'q',
-                     'qt', 'pkg', 'pkg.', 'fl qt', 'gal', 'cc', 'mL', 'package', 'clove', 'bottle', 'jar', 'container', 'sleeve', 'head', 'tub', 'slice', 'bunch', 'rib',
-                     'carton', 'bag', 'sprig', 'dash', 'dashes']
+                     'qt', 'pkg', 'pkg.', 'fl qt', 'gal', 'cc', 'mL', 'package', 'clove', 'bottle', 'jar', 'container', 'sleeve', 'head', 'tub', 'slice', 'bunch', 'rib(?!\-)',
+                     'carton', 'bag', 'sprig', 'dash', 'dashes', 'splash', 'splashes', 'strip', 'packet', 'sheet', 'rack', 'link']
             for u in units:
                 unit_search = re.search(rf'\b({u}s?)\b', ingredient_str)
                 if unit_search:
@@ -83,13 +82,23 @@ class AllrecipesSpider(CrawlSpider):
                     ingredient_str = re.sub(unit, '', ingredient_str, 1)  # remove unit from string
                     break
 
-            omitted_words = ['thick-cut', 'large', 'small', 'medium', 'jumbo', 'thick', 'thinly', 'minced', 'diced', 'cooked', 'cut', 'chopped', 'sliced', 'grated', 'to taste', 'cubed', 'fresh', 'toasted',
+            omitted_words = ['thick-cut', 'ready-to-eat', 'large', 'extra long', 'thin', 'small', 'petite', 'medium', 'jumbo', 'thick', 'thinly', 'minced', 'diced', 'cooked', 'cut', 'chopped',
+                             'sliced', 'grated', 'to taste', 'cubed', 'fresh', 'toasted',
                              'shredded', 'prepared', 'crushed', 'whole', 'finely', 'uncooked', 'cooked', 'freshly', 'for frying', 'sauteed', 'reserved', 'frozen', 'raw',
-                             'cold', 'processed', 'peeled', 'halved', 'julienned', 'juiced']
+                             'cold', 'processed', 'peeled', 'halved', 'julienned', 'juiced', 'into', 'refrigerated', 'canned', 'drained', 'rinsed', 'undrained', 'in pieces',
+                             'room temperature', 'seeded', 'and(?!\-)', 'divided', 'trimmed', 'cooled', 'shaken', 'skin removed', 'boiled', 'thawed', 'cleaned', 'cored', 'pounded',
+                             'thickly', 'split', 'in half', 'skinless', 'boneless', 'halves', 'flaked', 'quarters', 'wedges', 'quartered', 'chunks', 'in pieces', 'pieces',
+                             'softened', 'lengthwise', 'through', '-wide', 'inch', 'torn', 'bone-in', 'skin-on', 'with skin', 'eighths', 'discarded', 'warm', 'medaillons',
+                             'beaten', 'scrubbed', 'skinned', 'boned', 'bite-size', 'crumbled', 'unbaked', 'marinated', 'lengthwise', 'casing', 'removed', 'bite-sized',
+                             'ounce', 'portion', 'to', 'chunk', 'slice', 'to cover', 'in chunk', 'heated', 'inch', 'skin', 'bones', 'melted', 'as needed', 'round', 'separated',
+                             'liquid', 'diagonally', 'thickness', 'short', 'length', 'lightly', 'coarsely', 'crosswise', 'oven-safe', 'roughly', 'pre-baked', 'strip',
+                             'on the diagonal', 'stem', 'deveined', 'slightly', 'chilled', 'matchstick', 'horizontally', 'vertically', 'matchsticksize', 'patted', 'stripped',
+                             'charred', 'strands']
             for o in omitted_words:
                 ingredient_str = re.sub(rf'\b{o}s?\b', '', ingredient_str)
 
-            ingredient_str = re.sub(r',;|\bor\b.*', '', ingredient_str)  # remove everything after delimiters
+            ingredient_str = re.sub(r'[,;/*\-]|\d', '', ingredient_str)  # remove numbers and special characters
+            ingredient_str = re.sub(r'\bor\b.*|\binto\b.*|\bfor\b.*|\bif\b.*|\bwith\b.*|\bplus\b.*|\bin\b.*', '', ingredient_str)  # remove everything after delimiters
             ingredient_str = re.sub(r'\s\s+', ' ', ingredient_str).strip()  # remove multiple whitespaces
 
             ingredient['name'] = ''
@@ -126,4 +135,3 @@ class AllrecipesSpider(CrawlSpider):
 
         # process recipe in pipeline
         yield recipe
-
