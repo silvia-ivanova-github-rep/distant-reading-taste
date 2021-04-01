@@ -38,6 +38,12 @@ class RecipePipeline:
         self.cursor = self.conn.cursor(MySQLdb.cursors.DictCursor)
 
     def process_item(self, item, spider):
+        sql = "SELECT * FROM recipes WHERE title=%s"
+        self.cursor.execute(sql, (item.get("title"),))
+        result = self.cursor.fetchone()
+        if result is not None:
+            print("Recipe already exists!")
+            return item
         source_id = self.get_source_id(item.get("source"), item.get("country"))
         category_id = self.get_category_id(item.get('category'))
         sql = "INSERT INTO recipes(source_id, category_id, title, url) VALUES (%s, %s, %s, %s)"
@@ -86,13 +92,13 @@ class RecipePipeline:
 
     def save_recipe_ingredients(self, ingredients, recipe_id):
         for ingredient in ingredients:
-            if ingredient['name'] == '':
+            if ingredient['name'] == '' and ingredient['name_en'] == '':
                 print("ERROR: Ingredient is empty ({})".format(ingredient))
             else:
-                ingredient_id = self.get_or_create_ingredient(ingredient['name'])
+                ingredient_id = self.get_or_create_ingredient(ingredient['name'], ingredient['name_en'])
                 if ingredient_id:
                     amount = self.extract_amount(ingredient['quantity'])
-                    unit = self.extract_unit(ingredient['quantity'])
+                    unit = ingredient['unit']
 
                     sql = "INSERT INTO recipe_ingredients(recipe_id, ingredient_id, amount, unit, updated_at, created_at) VALUES (%s, %s, %s, %s, %s, %s)"
                     values = (recipe_id, ingredient_id, amount, unit, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -104,6 +110,10 @@ class RecipePipeline:
         energy = ''
         fat = ''
         protein = ''
+        saturated_fat = ''
+        sugar = ''
+        fibre = ''
+        salt = ''
         if 'carbohydrates' in nutrients:
             carbohydrates = self.extract_amount(nutrients['carbohydrates'])
         if 'energy' in nutrients:
@@ -112,12 +122,22 @@ class RecipePipeline:
             fat = self.extract_amount(nutrients['fat'])
         if 'protein' in nutrients:
             protein = self.extract_amount(nutrients['protein'])
-        self.cursor.execute("UPDATE recipes SET carbohydrates='%s', energy = '%s', fat = '%s', protein = '%s' WHERE id='%s'" % (carbohydrates, energy, fat, protein, recipe_id))
+        if 'saturated_fat' in nutrients:
+            saturated_fat = self.extract_amount(nutrients['saturated_fat'])
+        if 'sugar' in nutrients:
+            sugar = self.extract_amount(nutrients['sugar'])
+        if 'fibre' in nutrients:
+            fibre = self.extract_amount(nutrients['fibre'])
+        if 'salt' in nutrients:
+            salt = self.extract_amount(nutrients['salt'])
+
+        sql = "UPDATE recipes SET carbohydrates=%s, energy=%s, fat=%s, protein=%s, saturated_fat=%s, sugar=%s, fibre=%s, salt=%s WHERE id=%s"
+        self.cursor.execute(sql, (carbohydrates, energy, fat, protein, saturated_fat, sugar, fibre, salt, recipe_id))
         self.conn.commit()
 
-    def get_or_create_ingredient(self, ingredient):
-        sql = "SELECT * FROM ingredients WHERE name=%s OR alt_name_1=%s OR alt_name_2=%s OR alt_name_3=%s"
-        self.cursor.execute(sql, (ingredient, ingredient, ingredient, ingredient))
+    def get_or_create_ingredient(self, ingredient, ingredient_en):
+        sql = "SELECT * FROM ingredients WHERE name=%s OR name_en=%s"
+        self.cursor.execute(sql, (ingredient, ingredient_en))
         result = self.cursor.fetchall()
         if len(result) == 1:  # 1 ingredient found
             # print("INFO: Ingredient with id %s found" % (result[0]['id'],))
@@ -127,21 +147,33 @@ class RecipePipeline:
             return False
         else:  # ingredient does not yet exist
             # print("INFO: Ingredient %s does not yet exist. Creating it..." % (ingredient,))
-            sql = "INSERT INTO ingredients(type_id, name, updated_at, created_at) VALUES(%s, %s, %s, %s)"
-            self.cursor.execute(sql, (0, ingredient, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
+            sql = "INSERT INTO ingredients(type_id, name, name_en, updated_at, created_at) VALUES(%s, %s, %s, %s, %s)"
+            self.cursor.execute(sql, (0, ingredient, ingredient_en, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
             self.conn.commit()
-            self.get_or_create_ingredient(ingredient)
+            self.get_or_create_ingredient(ingredient, ingredient_en)
 
     @staticmethod
     def extract_amount(text):
         text = re.sub(',', '.', text)
         text = re.sub('½|1/2', ' 0.5', text)
-        text = re.sub('1/3', '0.33', text)
+        text = re.sub('⅓|1/3', '0.33', text)
         text = re.sub('¼|1/4', '0.25', text)
-        text = re.sub('1/5', '0.2', text)
-        text = re.sub('1/6', '0.167', text)
-        text = re.sub('1/8', '0.125', text)
-        text = re.sub('1/10', '0.1', text)
+        text = re.sub('⅕|1/5', '0.2', text)
+        text = re.sub('⅙|1/6', '0.167', text)
+        text = re.sub('⅐|1/7', '0.1428', text)
+        text = re.sub('⅛|1/8', '0.125', text)
+        text = re.sub('⅑|1/9', '0.111', text)
+        text = re.sub('⅒|1/10', '0.1', text)
+        text = re.sub('⅔|2/3', '0.666', text)
+        text = re.sub('¾|3/4', '0.75', text)
+        text = re.sub('⅖|2/5', '0.4', text)
+        text = re.sub('⅗|3/5', '0.6', text)
+        text = re.sub('⅘|4/5', '0.8', text)
+        text = re.sub('⅙|1/6', '0.166', text)
+        text = re.sub('⅚|5/6', '0.833', text)
+        text = re.sub('⅜|3/8', '0.375', text)
+        text = re.sub('⅝|5/8', '0.625', text)
+        text = re.sub('⅞|7/8', '0.875', text)
         results = re.findall(r'\d+(?:\.\d+)?', text)
         accumulated = sum(map(float, results))
         if accumulated:
