@@ -22,6 +22,7 @@ class Nutrients(Item):
     fibre = Field()
     salt = Field()
     carbohydrates = Field()
+    natrium = Field()
 
 
 class Recipe(Item):

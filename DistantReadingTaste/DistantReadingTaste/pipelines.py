@@ -114,6 +114,7 @@ class RecipePipeline:
         sugar = ''
         fibre = ''
         salt = ''
+        natrium = ''
         if 'carbohydrates' in nutrients:
             carbohydrates = self.extract_amount(nutrients['carbohydrates'])
         if 'energy' in nutrients:
@@ -130,27 +131,34 @@ class RecipePipeline:
             fibre = self.extract_amount(nutrients['fibre'])
         if 'salt' in nutrients:
             salt = self.extract_amount(nutrients['salt'])
+        if 'natrium' in nutrients:
+            natrium = self.extract_amount(nutrients['natrium'])
 
-        sql = "UPDATE recipes SET carbohydrates=%s, energy=%s, fat=%s, protein=%s, saturated_fat=%s, sugar=%s, fibre=%s, salt=%s WHERE id=%s"
-        self.cursor.execute(sql, (carbohydrates, energy, fat, protein, saturated_fat, sugar, fibre, salt, recipe_id))
+        sql = "UPDATE recipes SET carbohydrates=%s, energy=%s, fat=%s, protein=%s, saturated_fat=%s, sugar=%s, fibre=%s, salt=%s, natrium=%s WHERE id=%s"
+        self.cursor.execute(sql, (carbohydrates, energy, fat, protein, saturated_fat, sugar, fibre, salt, natrium, recipe_id))
         self.conn.commit()
 
     def get_or_create_ingredient(self, ingredient, ingredient_en):
-        sql = "SELECT * FROM ingredients WHERE name=%s OR name_en=%s"
-        self.cursor.execute(sql, (ingredient, ingredient_en))
-        result = self.cursor.fetchall()
-        if len(result) == 1:  # 1 ingredient found
-            # print("INFO: Ingredient with id %s found" % (result[0]['id'],))
-            return result[0]['id']
-        elif len(result) > 1:  # multiple ingredients found
-            # print("ERROR: Multiple ingredients found for %s. Skipping..." % (ingredient,))
+        if ingredient.strip():
+            sql = "SELECT * FROM ingredients WHERE name=%s LIMIT 1"
+            self.cursor.execute(sql, (ingredient,))
+        elif ingredient_en.strip():
+            sql = "SELECT * FROM ingredients WHERE name_en=%s LIMIT 1"
+            self.cursor.execute(sql, (ingredient_en,))
+        else:
+            print("get_or_create_ingredient: ingredient and ingredient_en blank!")
             return False
+
+        result = self.cursor.fetchone()
+        if result is not None:  # ingredient found
+            # print("INFO: Ingredient with id %s found" % (result[0]['id'],))
+            return result['id']
         else:  # ingredient does not yet exist
             # print("INFO: Ingredient %s does not yet exist. Creating it..." % (ingredient,))
             sql = "INSERT INTO ingredients(type_id, name, name_en, updated_at, created_at) VALUES(%s, %s, %s, %s, %s)"
             self.cursor.execute(sql, (0, ingredient, ingredient_en, time.strftime('%Y-%m-%d %H:%M:%S'), time.strftime('%Y-%m-%d %H:%M:%S')))
             self.conn.commit()
-            self.get_or_create_ingredient(ingredient, ingredient_en)
+            return self.get_or_create_ingredient(ingredient, ingredient_en)
 
     @staticmethod
     def extract_amount(text):
