@@ -8,7 +8,9 @@ from scrapy.item import Item, Field
 
 class Ingredient(Item):
     name = Field()
+    name_en = Field()
     quantity = Field()
+    unit = Field()
 
 
 class Nutrients(Item):
