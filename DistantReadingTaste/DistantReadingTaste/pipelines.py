@@ -38,8 +38,8 @@ class RecipePipeline:
         self.cursor = self.conn.cursor(MySQLdb.cursors.DictCursor)
 
     def process_item(self, item, spider):
-        sql = "SELECT * FROM recipes WHERE title=%s"
-        self.cursor.execute(sql, (item.get("title"),))
+        sql = "SELECT * FROM recipes WHERE url=%s"
+        self.cursor.execute(sql, (item.get("url"),))
         result = self.cursor.fetchone()
         if result is not None:
             print("Recipe already exists!")
@@ -148,7 +148,6 @@ class RecipePipeline:
 
         result = self.cursor.fetchone()
         if result is not None:  # ingredient found
-            # print("INFO: Ingredient with id %s found" % (result[0]['id'],))
             return result['id']
         else:  # ingredient does not yet exist
             # print("INFO: Ingredient %s does not yet exist. Creating it..." % (ingredient,))
