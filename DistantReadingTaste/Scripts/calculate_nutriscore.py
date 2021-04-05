@@ -27,7 +27,7 @@ if conn is None:
     sys.exit('Database connection could not be established!')
 cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
-cursor.execute("SELECT * FROM recipes WHERE nutri_score IS NULL LIMIT 10")
+cursor.execute("SELECT * FROM recipes WHERE nutri_score IS NULL")
 recipes = cursor.fetchall()
 for r in recipes:
     a = get_score(ENERGY_SCORES, r['energy'])
@@ -58,3 +58,8 @@ for r in recipes:
         score_label = 'E'
 
     print('RECIPE: ', r['title'], ': ', score, '-', score_label, ' (', a, ',', b, ',', c, ',', d, ',', e, ',', f, ',', g, ')')
+
+    sql = "UPDATE recipes SET nutri_score=%s, nutri_score_label=%s WHERE id=%s"
+    values = (score, score_label, r['id'])
+    cursor.execute(sql, values)
+    conn.commit()
