@@ -12,16 +12,19 @@ cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 t = Translator()
 
-cursor.execute("SELECT * FROM ingredients WHERE name_en IS NULL")
+cursor.execute("SELECT * FROM ingredients WHERE name_en IS NULL OR name_en = ''")
 rows = cursor.fetchall()
 for row in rows:
     time.sleep(0.5)
     name = row['name']
+    if not name:
+        continue
     translated = t.translate(name, src='de', dest='en')
     if translated:
         print(translated.origin, ' > ', translated.text)
-        sql = "UPDATE ingredients SET name_en=\"%s\" WHERE id=%s" % (translated.text, row['id'])
-        cursor.execute(sql)
+        sql = "UPDATE ingredients SET name_en=%s WHERE id=%s"
+        values = (translated.text, row['id'])
+        cursor.execute(sql, values)
         conn.commit()
 
 conn.close()

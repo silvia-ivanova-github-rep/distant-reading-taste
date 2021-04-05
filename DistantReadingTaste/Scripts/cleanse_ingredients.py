@@ -63,7 +63,7 @@ with open('ingredient_data.csv', newline='') as f:
 
 
 # general cleansing operations
-cursor.execute("SELECT * FROM ingredients")
+cursor.execute("SELECT * FROM ingredients WHERE name <> ''")
 ingredients = cursor.fetchall()
 for ingredient_row in ingredients:
     name = ingredient_row['name']
@@ -100,10 +100,10 @@ for ingredient_row in ingredients:
     cleansed = cleansed.replace('zum Verzieren', '')
     cleansed = cleansed.replace('aus dem Kühlregal', '')
     cleansed = cleansed.replace('zum Bestreichen', '')
-    cleansed = cleansed.replace('Type 405', '')
-    cleansed = cleansed.replace('Typ 405', '')
-    cleansed = cleansed.replace('405', '')
-    cleansed = cleansed.replace('550', '')
+    # cleansed = cleansed.replace('Type 405', '')
+    # cleansed = cleansed.replace('Typ 405', '')
+    # cleansed = cleansed.replace('405', '')
+    # cleansed = cleansed.replace('550', '')
     cleansed = cleansed.replace('vom Vortag', '')
     cleansed = cleansed.replace('zum Kochen', '')
     cleansed = cleansed.replace('für die Form', '')
@@ -117,8 +117,8 @@ for ingredient_row in ingredients:
     cleansed = cleansed.replace('TK', '')
     cleansed = cleansed.replace('in Würfeln', '')
     cleansed = cleansed.replace('mit Grün', '')
-    cleansed = cleansed.replace('Maggi', '')
-    cleansed = cleansed.replace('Dr. Oetker', '')
+    # cleansed = cleansed.replace('Maggi', '')
+    # cleansed = cleansed.replace('Dr. Oetker', '')
     cleansed = cleansed.replace('in Stücken', '')
     cleansed = cleansed.replace('zum Anrichten', '')
     cleansed = cleansed.replace('zum Weichkochen', '')
@@ -131,19 +131,53 @@ for ingredient_row in ingredients:
     cleansed = cleansed.replace('in dünnen Scheiben', '')
     cleansed = cleansed.replace('zum Grillen', '')
     cleansed = cleansed.replace('zum Marinieren', '')
+    cleansed = cleansed.replace('püriert', '')
+    cleansed = cleansed.replace('im Mixer', '')
+    cleansed = cleansed.replace('abgetropfte', '')
+    cleansed = cleansed.replace('abgetropft', '')
+    cleansed = cleansed.replace('abgewaschen', '')
+    cleansed = re.sub(r'\d+\s?(g|kg|ml|mm|l|L|cm|EL)', '', cleansed)
+    cleansed = re.sub(r'\boptional\b.*', '', cleansed)
+    cleansed = re.sub(r'\bAbtropfgewicht\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgestiftelt\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgestiftelte\b.*', '', cleansed)
+    cleansed = re.sub(r'\breif\b.*', '', cleansed)
+    cleansed = re.sub(r'\bmittelreif\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgekocht\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgekochte\b.*', '', cleansed)
+    cleansed = re.sub(r'\bschmal\b.*', '', cleansed)
+    cleansed = re.sub(r'\bschmale\b.*', '', cleansed)
+    cleansed = re.sub(r'\bfrisch\b.*', '', cleansed)
+    cleansed = re.sub(r'\bfrische\b.*', '', cleansed)
+    cleansed = re.sub(r'\bfein\b.*', '', cleansed)
+    cleansed = re.sub(r'\bfeine\b.*', '', cleansed)
+    cleansed = re.sub(r'\beinige\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgehackt\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgehackte\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgehacktes\b.*', '', cleansed)
+    cleansed = re.sub(r'\bgehackter\b.*', '', cleansed)
+    cleansed = re.sub(r'\bkleingeschnitten\b.*', '', cleansed)
+    cleansed = re.sub(r'\baufgetaut\b.*', '', cleansed)
+    cleansed = re.sub(r'\baufgetaute\b.*', '', cleansed)
+    cleansed = re.sub(r'\bá\b.*', '', cleansed)
+    cleansed = re.sub(r'\bà\b.*', '', cleansed)
+    cleansed = re.sub(r'\bje\b.*', '', cleansed)
+    cleansed = re.sub(r'\bersatzweise\b.*', '', cleansed)
+    cleansed = re.sub(r'\bz\?\.?B\.?\b.*', '', cleansed)
 
     # characters and whitespaces
     cleansed = cleansed.replace('"', '')
     cleansed = cleansed.replace('.', ' ')
+    cleansed = cleansed.replace(',', ' ')
     cleansed = cleansed.replace(':', '')
     cleansed = cleansed.replace(';', '')
-    cleansed = re.sub(r'[„“,*]]', '', cleansed)
-    cleansed = re.sub(r'[`´]]', '\'', cleansed)
-    cleansed = re.sub(r'[àáâ]', 'a', cleansed)
-    cleansed = re.sub(r'[èéê]', 'e', cleansed)
-    cleansed = re.sub(r'[ìíî]', 'i', cleansed)
-    cleansed = re.sub(r'[òóô]', 'o', cleansed)
-    cleansed = re.sub(r'[ùúû]', 'u', cleansed)
+    # cleansed = re.sub(r'[„“,*]]', '', cleansed)
+    # cleansed = re.sub(r'[`´]]', '\'', cleansed)
+    # cleansed = re.sub(r'[àáâ]', 'a', cleansed)
+    # cleansed = re.sub(r'[èéê]', 'e', cleansed)
+    # cleansed = re.sub(r'[ìíî]', 'i', cleansed)
+    # cleansed = re.sub(r'[òóô]', 'o', cleansed)
+    # cleansed = re.sub(r'[ùúû]', 'u', cleansed)
     cleansed = re.sub(r'\s\s+', ' ', cleansed)
     cleansed = cleansed.strip()
 
@@ -151,20 +185,21 @@ for ingredient_row in ingredients:
         update_ingredient(name, cleansed)
 
 
-with open('ingredient_data_manual.csv', newline='') as f:
+with open('ingredient_data_manual_2.csv', newline='') as f:
     reader = csv.reader(f)
     for item in reader:
-        update_ingredient_with_id(item[0], item[2])
+        update_ingredient(item[0], item[1])
 
 # remove ingredient with blank name
-cursor.execute("SELECT * FROM ingredients WHERE name='' LIMIT 1")
-result = cursor.fetchone()
-if result is not None:
-    sql = "DELETE FROM recipe_ingredients WHERE ingredient_id=%s"
-    cursor.execute(sql, (result['id'],))
-    conn.commit()
-    sql = "DELETE FROM ingredients WHERE id=%s"
-    cursor.execute(sql, (result['id'],))
-    conn.commit()
+# cursor.execute("SELECT * FROM ingredients WHERE name='' AND name_en=''")
+# result = cursor.fetchone()
+# if result is not None:
+#     sql = "DELETE FROM recipe_ingredients WHERE ingredient_id=%s"
+#     cursor.execute(sql, (result['id'],))
+#     conn.commit()
+#     sql = "DELETE FROM ingredients WHERE id=%s"
+#     cursor.execute(sql, (result['id'],))
+#     conn.commit()
+
 
 conn.close()

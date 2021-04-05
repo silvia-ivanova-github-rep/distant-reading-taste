@@ -11,7 +11,7 @@ if conn is None:
 cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 
-cursor.execute("SELECT MIN(id) AS id, name FROM ingredients GROUP BY name HAVING COUNT(*) > 1")
+cursor.execute("SELECT MIN(id) AS id, name FROM ingredients WHERE name<>'' AND name IS NOT NULL GROUP BY name HAVING COUNT(*) > 1")
 result = cursor.fetchall()
 for row in result:
     print(row['name'])
