@@ -7,7 +7,7 @@ import MySQLdb
 
 from credentials import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST, APP_KEY, APP_ID
 
-API_URL_BASSE = 'https://api.edamam.com/api/food-database/v2/'
+API_URL_BASE = 'https://api.edamam.com/api/food-database/v2/'
 
 
 def get_key(element, *keys):
@@ -26,7 +26,7 @@ def get_key(element, *keys):
 
 
 def api_query(ingredient):
-    api_url = '{0}parser'.format(API_URL_BASSE)
+    api_url = '{0}parser'.format(API_URL_BASE)
     payload = {'ingr': ingredient, 'app_id': APP_ID, 'app_key': APP_KEY}
     response = requests.get(api_url, params=payload)
     if response.status_code == 200:
@@ -40,69 +40,147 @@ if conn is None:
     sys.exit('Database connection could not be established!')
 cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
-cursor.execute("SELECT * FROM ingredients")
+# cursor.execute("SELECT * FROM ingredients")
+# result = cursor.fetchall()
+#
+# for row in result:
+#     time.sleep(1.5)  # api allows only 100 queries per minute
+#     name_en = row['name_en']
+#     print('Ingredient: ', name_en)
+#
+#     result = api_query(name_en)
+#     if result:
+#         if result['parsed']:
+#             item = result['parsed'][0]
+#         elif result['hints']:
+#             item = result['hints'][0]
+#         else:
+#             continue
+#
+#         food_id = item['food']['foodId']  # e.g. food_abiw5baauresjmb6xpap2bg3otzu
+#         parsed = item
+#
+#         sql = "UPDATE ingredients SET edamam_food_id=%s, updated_at=%s WHERE id=%s"
+#         values = (food_id, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])
+#         cursor.execute(sql, values)
+#         conn.commit()
+#
+#         sql = "SELECT * FROM recipe_ingredients WHERE ingredient_id=%s"
+#         cursor.execute(sql, (row['id'],))
+#         r = cursor.fetchall()
+#         for ri in r:
+#             amount = ri['amount']
+#             unit = ri['unit']
+#             print('   quantity: ', amount, ' ', unit)
+#
+#             # t['hints'][0]['measures'][0]['qualified'][3]['qualifiers'][0]['label']
+#             # m = result['hints'][0]['measures']
+#             weight = ''
+#             for x in result['hints']:
+#                 m = x['measures']
+#                 if unit:
+#                     unit = re.sub(r's$', '', unit).capitalize()
+#                     m1 = next((item for item in m if unit in item.values() and item['label'] == unit), False)
+#                     if m1:
+#                         if 'weight' in m1:
+#                             weight = m1['weight']
+#                         elif 'qualified' in m1:
+#                             weight = m1['qualified'][0]['weight']
+#                         break
+#
+#                 if not weight:
+#                     m1 = next((item for item in m if 'Whole' in item.values() and item['label'] == 'Whole'), False)
+#                     if m1:
+#                         weight = m1['weight']
+#                         break
+#
+#             print('   weight: ', weight)
+#
+#             if weight:
+#                 weight_sum = float(amount) * float(weight)
+#
+#                 sql = "UPDATE recipe_ingredients SET weight=%s WHERE id=%s"
+#                 cursor.execute(sql, (weight_sum, ri['id']))
+#
+#
+# cursor.execute("SELECT * FROM ingredients WHERE edamam_food_id IS NOT NULL AND carbohydrates IS NULL")
+# result = cursor.fetchall()
+#
+# headers = {'Content-Type': 'application/json'}
+#
+# params = (('app_id', APP_ID), ('app_key', APP_KEY))
+#
+# for row in result:
+#     name = row['name_en']
+#     print('Ingredient: ', name)
+#
+#     time.sleep(1.5)  # api allows only 100 queries per minute
+#
+#     data = {"ingredients": [
+#         {
+#             "quantity": 100,
+#             "measureURI": "http://www.edamam.com/ontologies/edamam.owl#Measure_gram",
+#             "foodId": row['edamam_food_id']
+#         }
+#     ]}
+#
+#     json_data = json.dumps(data)
+#     response = requests.post('https://api.edamam.com/api/food-database/v2/nutrients', headers=headers, params=params, data=json_data)
+#
+#     if response.status_code == 200:
+#         result = json.loads(response.content.decode('utf-8'))
+#         energy = get_key(result, 'totalNutrients', 'ENERC_KCAL', 'quantity')
+#         fat = get_key(result, 'totalNutrients', 'FAT', 'quantity')
+#         saturated_fat = get_key(result, 'totalNutrients', 'FASAT', 'quantity')
+#         fiber = get_key(result, 'totalNutrients', 'FIBTG', 'quantity')
+#         sodium = get_key(result, 'totalNutrients', 'NA', 'quantity')
+#         carbohydrates = get_key(result, 'totalNutrients', 'CHOCDF', 'quantity')
+#         protein = get_key(result, 'totalNutrients', 'PROCNT', 'quantity')
+#         sugar = get_key(result, 'totalNutrients', 'SUGAR', 'quantity')
+#
+#         print('  energy: ', energy)
+#         print('  fat: ', fat)
+#         print('  saturated_fat: ', saturated_fat)
+#         print('  fiber: ', fiber)
+#         print('  sodium: ', sodium)
+#         print('  carbohydrates: ', carbohydrates)
+#         print('  protein: ', protein)
+#         print('  sugar: ', sugar)
+#
+#         sql = "UPDATE ingredients SET energy=%s, carbohydrates=%s, fat=%s, saturated_fat=%s, sugar=%s, protein=%s, fibre=%s, sodium=%s, updated_at=%s WHERE id=%s"
+#         values = (energy, carbohydrates, fat, saturated_fat, sugar, protein, fiber, sodium, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])
+#         cursor.execute(sql, values)
+#         conn.commit()
+
+
+cursor.execute("SELECT * FROM recipes where vegetables_fruits IS NULL")
 result = cursor.fetchall()
 
 for row in result:
-    time.sleep(1)
-    name_en = row['name_en']
+    title = row['title']
+    print('Recipe: ', title)
 
-    result = api_query(name_en)
-    if result:
-        food_id = result['parsed'][0]['food']['foodId']  # e.g. food_abiw5baauresjmb6xpap2bg3otzu
-        category = result['parsed'][0]['food']['category']  # e.g. 'Generic foods'
-        type_id = 0
-        if category == 'Generic foods':
-            type_id = 5
+    sql = "SELECT ri.weight, i.* FROM recipe_ingredients AS ri JOIN ingredients AS i ON ri.ingredient_id = i.id WHERE ri.recipe_id=%s"
+    cursor.execute(sql, (row['id'],))
+    r = cursor.fetchall()
 
-        parsed = result['parsed'][0]
-        energy = get_key(parsed, 'food', 'nutrients', 'ENERC_KCAL')
-        protein = get_key(parsed, 'food', 'nutrients', 'PROCNT')
-        fat = get_key(parsed, 'food', 'nutrients', 'FAT')
-        saturated_fat = get_key(parsed, 'food', 'nutrients', 'FASAT')
-        carbs = get_key(parsed, 'food', 'nutrients', 'CHOCDF')
-        fiber = get_key(parsed, 'food', 'nutrients', 'FIBTG')
-        sugar = get_key(parsed, 'food', 'nutrients', 'SUGAR')
-        salt = get_key(parsed, 'food', 'nutrients', 'SALT')
-        natrium = get_key(parsed, 'food', 'nutrients', 'NA')
+    weight_vegetable = 0
+    weight_rest = 0
+    for item in r:
+        if item['weight'] is None:
+            weight = 0
+        else:
+            weight = float(item['weight'])
 
-        sql = "UPDATE ingredients SET type_id=%s, energy=%s, fat=%s, saturated_fat=%s, sugar=%s, protein=%s, fibre=%s, salt=%s, natrium=%s, edamam_food_id=%s, updated_at=%s WHERE id=%s"
-        values = (type_id, energy, fat, saturated_fat, sugar, protein, fiber, salt, natrium, food_id, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])
-        cursor.execute(sql, values)
-        conn.commit()
+        if item['type_id'] in [1, 2, 3, 4]:
+            weight_vegetable += weight
+        else:
+            weight_rest += weight
 
-        sql = "SELECT * FROM recipe_ingredients WHERE ingredient_id=%s"
-        cursor.execute(sql, (row['id'],))
-        r = cursor.fetchall()
-        for ri in r:
-            amount = ri['amount']
-            unit = ri['unit']
-            print(name_en, ': ', amount, ' ', unit)
+    weight_vegetable_percent = weight_vegetable / (weight_vegetable + weight_rest)
 
-            # t['hints'][0]['measures'][0]['qualified'][3]['qualifiers'][0]['label']
-            m = result['hints'][0]['measures']
-            weight = ''
-            if unit:
-                unit = re.sub(r's$', '', unit).capitalize()
-                m1 = next((item for item in m if item['label'] == unit), False)
-                if m1:
-                    weight = m1['weight']
-
-            if not weight:
-                m1 = next((item for item in m if item['label'] == 'Whole'), False)
-                if m1:
-                    weight = m1['weight']
-
-            print("WEIGHT: ", weight)
-
-            if weight:
-                weight_sum = float(amount) * float(weight)
-
-                sql = "UPDATE recipe_ingredients SET weight=%s WHERE id=%s"
-                cursor.execute(sql, (weight_sum, ri['id']))
-
-
-
-
+    sql = "UPDATE recipes SET vegetables_fruits=%s WHERE id=%s"
+    cursor.execute(sql, (weight_vegetable_percent, row['id']))
+    conn.commit()
 
 

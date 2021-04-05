@@ -62,11 +62,10 @@ for row in rows:
         carbs = get_key(parsed, 'food', 'nutrients', 'CHOCDF')
         fiber = get_key(parsed, 'food', 'nutrients', 'FIBTG')
         sugar = get_key(parsed, 'food', 'nutrients', 'SUGAR')
-        salt = get_key(parsed, 'food', 'nutrients', 'SALT')
-        natrium = get_key(parsed, 'food', 'nutrients', 'NA')
+        sodium = get_key(parsed, 'food', 'nutrients', 'NA')
 
-        sql = "UPDATE ingredients SET energy=%s, fat=%s, saturated_fat=%s, sugar=%s, protein=%s, fibre=%s, salt=%s, natrium=%s, updated_at=%s WHERE id=%s"
-        values = (energy, fat, saturated_fat, sugar, protein, fiber, salt, natrium, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])
+        sql = "UPDATE ingredients SET energy=%s, fat=%s, saturated_fat=%s, sugar=%s, protein=%s, fibre=%s, sodium=%s, updated_at=%s WHERE id=%s"
+        values = (energy, fat, saturated_fat, sugar, protein, fiber, sodium, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])
         cursor.execute(sql, values)
         conn.commit()
         print(cursor.rowcount, "record(s) affected")

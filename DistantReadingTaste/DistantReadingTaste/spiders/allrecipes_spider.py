@@ -127,7 +127,7 @@ class AllrecipesSpider(CrawlSpider):
             elif nutrient_name == 'dietary fiber:':
                 nutrients['fibre'] = nutrient_value
             elif nutrient_name == 'sodium:':
-                nutrients['natrium'] = nutrient_value
+                nutrients['sodium'] = nutrient_value
 
         recipe['nutrients'] = nutrients
 

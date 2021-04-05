@@ -20,9 +20,8 @@ class Nutrients(Item):
     sugar = Field()
     protein = Field()
     fibre = Field()
-    salt = Field()
     carbohydrates = Field()
-    natrium = Field()
+    sodium = Field()
 
 
 class Recipe(Item):

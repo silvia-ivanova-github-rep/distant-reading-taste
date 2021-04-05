@@ -113,8 +113,7 @@ class RecipePipeline:
         saturated_fat = ''
         sugar = ''
         fibre = ''
-        salt = ''
-        natrium = ''
+        sodium = ''
         if 'carbohydrates' in nutrients:
             carbohydrates = self.extract_amount(nutrients['carbohydrates'])
         if 'energy' in nutrients:
@@ -129,13 +128,11 @@ class RecipePipeline:
             sugar = self.extract_amount(nutrients['sugar'])
         if 'fibre' in nutrients:
             fibre = self.extract_amount(nutrients['fibre'])
-        if 'salt' in nutrients:
-            salt = self.extract_amount(nutrients['salt'])
-        if 'natrium' in nutrients:
-            natrium = self.extract_amount(nutrients['natrium'])
+        if 'sodium' in nutrients:
+            sodium = self.extract_amount(nutrients['sodium'])
 
-        sql = "UPDATE recipes SET carbohydrates=%s, energy=%s, fat=%s, protein=%s, saturated_fat=%s, sugar=%s, fibre=%s, salt=%s, natrium=%s WHERE id=%s"
-        self.cursor.execute(sql, (carbohydrates, energy, fat, protein, saturated_fat, sugar, fibre, salt, natrium, recipe_id))
+        sql = "UPDATE recipes SET carbohydrates=%s, energy=%s, fat=%s, protein=%s, saturated_fat=%s, sugar=%s, fibre=%s, sodium=%s WHERE id=%s"
+        self.cursor.execute(sql, (carbohydrates, energy, fat, protein, saturated_fat, sugar, fibre, sodium, recipe_id))
         self.conn.commit()
 
     def get_or_create_ingredient(self, ingredient, ingredient_en):
