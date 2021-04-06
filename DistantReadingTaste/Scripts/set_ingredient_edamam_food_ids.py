@@ -45,7 +45,7 @@ result = cursor.fetchall()
 for row in result:
     time.sleep(1.6)  # api allows only 100 queries per minute
     name_en = row['name_en']
-    print('.')
+    print(name_en)
     result = api_query(name_en)
     if result:
         if result['parsed']:

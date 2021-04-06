@@ -11,26 +11,11 @@ if conn is None:
 cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 
-def update_ingredient(old_name, new_name):
+def update_ingredient(ingredient_id, old_name, new_name):
     print(old_name, ' > ', new_name)
-    sql = "SELECT * FROM ingredients WHERE name=%s LIMIT 1"
-    cursor.execute(sql, (new_name,))
-    result = cursor.fetchone()
-    if result is not None:  # target value name already exists
-        sql = "SELECT * FROM ingredients WHERE name=%s LIMIT 1"
-        cursor.execute(sql, (old_name,))
-        row = cursor.fetchone()
-        if row is not None:
-            sql = "UPDATE recipe_ingredients SET ingredient_id=%s WHERE ingredient_id=%s"
-            cursor.execute(sql, (result['id'], row['id']))
-            conn.commit()
-            sql = "DELETE FROM ingredients WHERE id=%s"
-            cursor.execute(sql, (row['id'],))
-            conn.commit()
-    else:
-        sql = "UPDATE ingredients SET name=%s WHERE name=%s"
-        cursor.execute(sql, (new_name, old_name))
-        conn.commit()
+    sql = "UPDATE ingredients SET name=%s WHERE id=%s"
+    cursor.execute(sql, (new_name, ingredient_id))
+    conn.commit()
 
 
 def update_ingredient_with_id(ingredient_id, new_name):
@@ -56,14 +41,14 @@ def update_ingredient_with_id(ingredient_id, new_name):
 
 
 # cleansing from csv file
-with open('ingredient_data.csv', newline='') as f:
-    reader = csv.reader(f)
-    for item in reader:
-        update_ingredient(item[0], item[1])
+# with open('cleansed_ingredient_data.csv', newline='') as f:
+#     reader = csv.reader(f)
+#     for item in reader:
+#         update_ingredient(item[0], item[1])
 
 
 # general cleansing operations
-cursor.execute("SELECT * FROM ingredients WHERE name <> ''")
+cursor.execute("SELECT * FROM ingredients WHERE name <> '' AND name_en = ''")
 ingredients = cursor.fetchall()
 for ingredient_row in ingredients:
     name = ingredient_row['name']
@@ -100,10 +85,10 @@ for ingredient_row in ingredients:
     cleansed = cleansed.replace('zum Verzieren', '')
     cleansed = cleansed.replace('aus dem Kühlregal', '')
     cleansed = cleansed.replace('zum Bestreichen', '')
-    # cleansed = cleansed.replace('Type 405', '')
-    # cleansed = cleansed.replace('Typ 405', '')
-    # cleansed = cleansed.replace('405', '')
-    # cleansed = cleansed.replace('550', '')
+    cleansed = cleansed.replace('Type 405', '')
+    cleansed = cleansed.replace('Typ 405', '')
+    cleansed = cleansed.replace('405', '')
+    cleansed = cleansed.replace('550', '')
     cleansed = cleansed.replace('vom Vortag', '')
     cleansed = cleansed.replace('zum Kochen', '')
     cleansed = cleansed.replace('für die Form', '')
@@ -136,8 +121,14 @@ for ingredient_row in ingredients:
     cleansed = cleansed.replace('abgetropfte', '')
     cleansed = cleansed.replace('abgetropft', '')
     cleansed = cleansed.replace('abgewaschen', '')
-    cleansed = re.sub(r'\d+\s?(g|kg|ml|mm|l|L|cm|EL)', '', cleansed)
+    cleansed = cleansed.replace('mindestens', '')
+    cleansed = cleansed.replace('n B', '')
+    cleansed = cleansed.replace('n.B.', '')
+    cleansed = cleansed.replace('nach Bedarf', '')
+    cleansed = cleansed.replace(' z B ', ' ')
+    cleansed = re.sub(r'\d+\s?(g|kg|ml|mm|l|L|cm|EL|Pck)', '', cleansed)
     cleansed = re.sub(r'\boptional\b.*', '', cleansed)
+    cleansed = re.sub(r'\bauch\b.*', '', cleansed)
     cleansed = re.sub(r'\bAbtropfgewicht\b.*', '', cleansed)
     cleansed = re.sub(r'\bgestiftelt\b.*', '', cleansed)
     cleansed = re.sub(r'\bgestiftelte\b.*', '', cleansed)
@@ -149,6 +140,7 @@ for ingredient_row in ingredients:
     cleansed = re.sub(r'\bschmale\b.*', '', cleansed)
     cleansed = re.sub(r'\bfrisch\b.*', '', cleansed)
     cleansed = re.sub(r'\bfrische\b.*', '', cleansed)
+    cleansed = re.sub(r'\bfrisches\b.*', '', cleansed)
     cleansed = re.sub(r'\bfein\b.*', '', cleansed)
     cleansed = re.sub(r'\bfeine\b.*', '', cleansed)
     cleansed = re.sub(r'\beinige\b.*', '', cleansed)
@@ -159,11 +151,104 @@ for ingredient_row in ingredients:
     cleansed = re.sub(r'\bkleingeschnitten\b.*', '', cleansed)
     cleansed = re.sub(r'\baufgetaut\b.*', '', cleansed)
     cleansed = re.sub(r'\baufgetaute\b.*', '', cleansed)
+    cleansed = re.sub(r'\bnicht\b.*', '', cleansed)
     cleansed = re.sub(r'\bá\b.*', '', cleansed)
     cleansed = re.sub(r'\bà\b.*', '', cleansed)
     cleansed = re.sub(r'\bje\b.*', '', cleansed)
+    cleansed = re.sub(r'\bzu\b.*', '', cleansed)
     cleansed = re.sub(r'\bersatzweise\b.*', '', cleansed)
-    cleansed = re.sub(r'\bz\?\.?B\.?\b.*', '', cleansed)
+    cleansed = re.sub(r'\bbis\b.*', '', cleansed)
+    cleansed = re.sub(r'\baber\b.*', '', cleansed)
+    cleansed = re.sub(r'\bum\b.*', '', cleansed)
+    cleansed = re.sub(r'\bwie\b.*', '', cleansed)
+    cleansed = re.sub(r'\betwa\b.*', '', cleansed)
+    cleansed = re.sub(r'\bfalls\b.*', '', cleansed)
+    cleansed = re.sub(r'\bvorher\b.*', '', cleansed)
+    cleansed = re.sub(r'\bglatt\b.*', '', cleansed)
+    cleansed = re.sub(r'\bglatte\b.*', '', cleansed)
+    cleansed = re.sub(r'\bverwende\b.*', '', cleansed)
+    cleansed = re.sub(r'\bwer\b.*', '', cleansed)
+    cleansed = re.sub(r'\bRezept\b.*', '', cleansed)
+    cleansed = re.sub(r'\bbei\b.*', '', cleansed)
+    cleansed = re.sub(r'\bpro\b.*', '', cleansed)
+    cleansed = re.sub(r'\bnur\b.*', '', cleansed)
+    cleansed = re.sub(r'\bsiehe\b.*', '', cleansed)
+    cleansed = re.sub(r'\bkalt\b', '', cleansed)
+    cleansed = re.sub(r'\bdick\b', '', cleansed)
+    cleansed = re.sub(r'\bich\b', '', cleansed)
+    cleansed = re.sub(r'\bdas\b', '', cleansed)
+    cleansed = re.sub(r'\bnehme\b', '', cleansed)
+    cleansed = re.sub(r'\bgern\b', '', cleansed)
+    cleansed = re.sub(r'\bküchenfertig\b', '', cleansed)
+    cleansed = re.sub(r'\bgewogen\b', '', cleansed)
+    cleansed = re.sub(r'\bvorbereitet\b', '', cleansed)
+    cleansed = re.sub(r'\bausgehöhlt\b', '', cleansed)
+    cleansed = re.sub(r'\bgeputzt\b', '', cleansed)
+    cleansed = re.sub(r'\bvorgaren\b', '', cleansed)
+    cleansed = re.sub(r'\bvorgegart\b', '', cleansed)
+    cleansed = re.sub(r'\broh\b', '', cleansed)
+    cleansed = re.sub(r'\bsehr kalt\b', '', cleansed)
+    cleansed = re.sub(r'\breichlich\b', '', cleansed)
+    cleansed = re.sub(r'\bfeinst\b', '', cleansed)
+    cleansed = re.sub(r'\bfertig\b', '', cleansed)
+    cleansed = re.sub(r'\bType\b', '', cleansed)
+    cleansed = re.sub(r'\bTyp\b', '', cleansed)
+    cleansed = re.sub(r'\bschon\b', '', cleansed)
+    cleansed = re.sub(r'\bgesiebt\b', '', cleansed)
+    cleansed = re.sub(r'\bwarm\b', '', cleansed)
+    cleansed = re.sub(r'\bheiß\b', '', cleansed)
+    cleansed = re.sub(r'\bkühl\b', '', cleansed)
+    cleansed = re.sub(r'\bkalt\b', '', cleansed)
+    cleansed = re.sub(r'\bgut\b', '', cleansed)
+    cleansed = re.sub(r'\bgute\b', '', cleansed)
+    cleansed = re.sub(r'\bhalbiert\b', '', cleansed)
+    cleansed = re.sub(r'\blängs\b', '', cleansed)
+    cleansed = re.sub(r'\bgestreift\b', '', cleansed)
+    cleansed = re.sub(r'\bquer\b', '', cleansed)
+    cleansed = re.sub(r'\bhalbierte\b', '', cleansed)
+    cleansed = re.sub(r'\babgehangen\b', '', cleansed)
+    cleansed = re.sub(r'\bQualität\b', '', cleansed)
+    cleansed = re.sub(r'\bbio\b', '', cleansed)
+    cleansed = re.sub(r'\bBio\b', '', cleansed)
+    cleansed = re.sub(r'\bkalte\b', '', cleansed)
+    cleansed = re.sub(r'\bkalter\b', '', cleansed)
+    cleansed = re.sub(r'\babgekühlt\b', '', cleansed)
+    cleansed = re.sub(r'\blauwarm\b', '', cleansed)
+    cleansed = re.sub(r'\blauwarmes\b', '', cleansed)
+    cleansed = re.sub(r'\bgewaschen\b', '', cleansed)
+    cleansed = re.sub(r'\bvorgekochter\b', '', cleansed)
+    cleansed = re.sub(r'\bvorgekocht\b', '', cleansed)
+    cleansed = re.sub(r'\bgekochter\b', '', cleansed)
+    cleansed = re.sub(r'\bgeviertelt\b', '', cleansed)
+    cleansed = re.sub(r'\bviertel\b', '', cleansed)
+    cleansed = re.sub(r'\bgekocht\b', '', cleansed)
+    cleansed = re.sub(r'\bfestkochend\b', '', cleansed)
+    cleansed = re.sub(r'\bklein\b', '', cleansed)
+    cleansed = re.sub(r'\bkleine\b', '', cleansed)
+    cleansed = re.sub(r'\bgroß\b', '', cleansed)
+    cleansed = re.sub(r'\bgroße\b', '', cleansed)
+    cleansed = re.sub(r'\bmittel\b', '', cleansed)
+    cleansed = re.sub(r'\bfeste\b', '', cleansed)
+    cleansed = re.sub(r'\bWürfel\b', '', cleansed)
+    cleansed = re.sub(r'\bStücke\b', '', cleansed)
+    cleansed = re.sub(r'\bmittelgroß\b', '', cleansed)
+    cleansed = re.sub(r'\bvorwiegend\b', '', cleansed)
+    cleansed = re.sub(r'\bneu\b', '', cleansed)
+    cleansed = re.sub(r'\bmittelgroße\b', '', cleansed)
+    cleansed = re.sub(r'\bmehligkochend\b', '', cleansed)
+    cleansed = re.sub(r'\bfestkochend\b', '', cleansed)
+    cleansed = re.sub(r'\bgleich\b', '', cleansed)
+    cleansed = re.sub(r'\bsehr\b', '', cleansed)
+    cleansed = re.sub(r'\blecker\b', '', cleansed)
+    cleansed = re.sub(r'zB.*', '', cleansed)
+    cleansed = re.sub(r'am besten.*', '', cleansed)
+    cleansed = re.sub(r'bevorzugt.*', '', cleansed)
+    cleansed = re.sub(r'vorzugsweise.*', '', cleansed)
+    cleansed = re.sub(r'z\.?B.*', '', cleansed)
+    cleansed = re.sub(r'-$', '', cleansed)
+    cleansed = re.sub(r'^-', '', cleansed)
+    cleansed = re.sub(r'\d+', '', cleansed)
+    cleansed = re.sub(r'%', '', cleansed)
 
     # characters and whitespaces
     cleansed = cleansed.replace('"', '')
@@ -182,13 +267,7 @@ for ingredient_row in ingredients:
     cleansed = cleansed.strip()
 
     if name != cleansed:  # update only if there are changes
-        update_ingredient(name, cleansed)
-
-
-with open('ingredient_data_manual_2.csv', newline='') as f:
-    reader = csv.reader(f)
-    for item in reader:
-        update_ingredient(item[0], item[1])
+        update_ingredient(ingredient_row['id'], name, cleansed)
 
 # remove ingredient with blank name
 # cursor.execute("SELECT * FROM ingredients WHERE name='' AND name_en=''")

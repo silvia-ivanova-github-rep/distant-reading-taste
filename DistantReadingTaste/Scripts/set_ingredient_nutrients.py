@@ -29,7 +29,7 @@ if conn is None:
 cursor = conn.cursor(MySQLdb.cursors.DictCursor)
 
 # get ingredients from database
-cursor.execute("SELECT * FROM ingredients WHERE edamam_food_id IS NOT NULL AND carbohydrates IS NULL")
+cursor.execute("SELECT * FROM ingredients WHERE edamam_food_id IS NOT NULL AND energy IS NULL")
 rows = cursor.fetchall()
 
 headers = {'Content-Type': 'application/json'}

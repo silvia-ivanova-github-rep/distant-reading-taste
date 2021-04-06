@@ -63,3 +63,5 @@ for r in recipes:
     values = (score, score_label, r['id'])
     cursor.execute(sql, values)
     conn.commit()
+
+conn.close()
