@@ -22,8 +22,8 @@ for row in rows:
     translated = t.translate(name, src='de', dest='en')
     if translated:
         print(translated.origin, ' > ', translated.text)
-        sql = "UPDATE ingredients SET name_en=%s WHERE id=%s"
-        values = (translated.text, row['id'])
+        sql = "UPDATE ingredients SET name_en=%s, updated_at=%s WHERE id=%s"
+        values = (translated.text, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])
         cursor.execute(sql, values)
         conn.commit()
 

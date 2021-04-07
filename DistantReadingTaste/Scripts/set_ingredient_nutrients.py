@@ -39,7 +39,7 @@ for row in rows:
     name = row['name_en']
     print('Ingredient: ', name)
 
-    time.sleep(1.5)  # api allows only 100 queries per minute
+    time.sleep(0.7)  # api allows only 100 queries per minute
 
     data = {"ingredients": [
         {

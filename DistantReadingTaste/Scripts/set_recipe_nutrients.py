@@ -6,6 +6,8 @@ from credentials import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABAS
 
 
 def num(s):
+    if not s:
+        return 0
     try:
         return int(s)
     except ValueError:
@@ -42,38 +44,38 @@ for row in result:
 
     for row2 in result2:
         factor = num(row2['weight']) / 100
-        energy += num(row['energy']) * factor
-        carbohydrates += num(row['carbohydrates']) * factor
-        fat += num(row['fat']) * factor
-        saturated_fat += num(row['saturated_fat']) * factor
-        sugar += num(row['sugar']) * factor
-        protein += num(row['protein']) * factor
-        fibre += num(row['fibre']) * factor
-        sodium += num(row['sodium']) * factor
+        energy += num(row2['energy']) * factor
+        carbohydrates += num(row2['carbohydrates']) * factor
+        fat += num(row2['fat']) * factor
+        saturated_fat += num(row2['saturated_fat']) * factor
+        sugar += num(row2['sugar']) * factor
+        protein += num(row2['protein']) * factor
+        fibre += num(row2['fibre']) * factor
+        sodium += num(row2['sodium']) * factor
 
     # use existing data if available
-    if row['energy']:
+    if row['energy'] and row['energy'] != '0':
         print(energy, row['energy'])
         energy = row['energy']
-    if row['carbohydrates']:
+    if row['carbohydrates'] and row['carbohydrates'] != '0':
         print(carbohydrates, row['carbohydrates'])
         carbohydrates = row['carbohydrates']
-    if row['fat']:
+    if row['fat'] and row['fat'] != '0':
         print(fat, row['fat'])
         fat = row['fat']
-    if row['saturated_fat']:
+    if row['saturated_fat'] and row['saturated_fat'] != '0':
         print(saturated_fat, row['saturated_fat'])
         saturated_fat = row['saturated_fat']
-    if row['sugar']:
+    if row['sugar'] and row['sugar'] != '0':
         print(sugar, row['sugar'])
         sugar = row['sugar']
-    if row['protein']:
+    if row['protein'] and row['protein'] != '0':
         print(protein, row['protein'])
         protein = row['protein']
-    if row['fibre']:
+    if row['fibre'] and row['fibre'] != '0':
         print(fibre, row['fibre'])
         fibre = row['fibre']
-    if row['sodium']:
+    if row['sodium'] and row['sodium'] != '0':
         print(sodium, row['sodium'])
         sodium = row['sodium']
 

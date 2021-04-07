@@ -55,12 +55,12 @@ cursor.execute("SELECT ingredient_id, name_en, amount, unit, edamam_food_id "
                "FROM recipe_ingredients ri "
                "JOIN ingredients i on ri.ingredient_id = i.id "
                "JOIN recipes r on ri.recipe_id = r.id "
-               "WHERE ri.weight IS NULL "
+               "WHERE ri.weight IS NULL AND r.source_id=2 "
                "GROUP BY ingredient_id, name_en, amount, unit, edamam_food_id")
 result = cursor.fetchall()
 
 for row in result:
-    time.sleep(1.5)  # api allows only 100 queries per minute
+    time.sleep(0.7)  # api allows only 100 queries per minute
     name = row['name_en']
     food_id = row['edamam_food_id']
     print(name, row['amount'], row['unit'])

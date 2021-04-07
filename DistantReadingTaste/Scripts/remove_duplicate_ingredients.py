@@ -1,7 +1,6 @@
 import sys
-import re
 import MySQLdb
-import csv
+import time
 
 from credentials import DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, DATABASE_HOST
 
@@ -47,8 +46,8 @@ for row in result:
     result3 = cursor.fetchall()
 
     for row3 in result3:
-        sql1 = "UPDATE recipe_ingredients SET ingredient_id=%s WHERE ingredient_id=%s"
-        cursor.execute(sql1, (max_id, row3['id']))
+        sql1 = "UPDATE recipe_ingredients SET ingredient_id=%s, updated_at=%s WHERE ingredient_id=%s"
+        cursor.execute(sql1, (max_id, time.strftime('%Y-%m-%d %H:%M:%S'), row3['id']))
         conn.commit()
         sql2 = "DELETE FROM ingredients WHERE id=%s"
         cursor.execute(sql2, (row3['id'],))

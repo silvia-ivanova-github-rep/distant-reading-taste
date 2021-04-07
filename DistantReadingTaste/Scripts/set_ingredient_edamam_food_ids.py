@@ -43,7 +43,7 @@ cursor.execute("SELECT * FROM ingredients WHERE edamam_food_id IS NULL")
 result = cursor.fetchall()
 
 for row in result:
-    time.sleep(1.6)  # api allows only 100 queries per minute
+    time.sleep(0.7)  # api allows only 100 queries per minute
     name_en = row['name_en']
     print(name_en)
     result = api_query(name_en)
@@ -58,7 +58,7 @@ for row in result:
         food_id = item['food']['foodId']  # e.g. food_abiw5baauresjmb6xpap2bg3otzu
         food_label = item['food']['label']
 
-        print('Ingredient: ', name_en, ' (', food_label, ')')
+        print('   Ingredient: ', name_en, ' (', food_label, ')')
 
         sql = "UPDATE ingredients SET edamam_food_id=%s, alt_name_1=%s, updated_at=%s WHERE id=%s"
         values = (food_id, food_label, time.strftime('%Y-%m-%d %H:%M:%S'), row['id'])

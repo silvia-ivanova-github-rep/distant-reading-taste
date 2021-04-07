@@ -18,6 +18,13 @@ def update_ingredient(ingredient_id, old_name, new_name):
     conn.commit()
 
 
+def update_ingredient_with_type(ingredient_id, new_name, type_id):
+    print(ingredient_id, ' > ', new_name, ' > ', type_id)
+    sql = "UPDATE ingredients SET name=%s, type_id=%s WHERE id=%s AND energy IS NULL"
+    cursor.execute(sql, (new_name, type_id, ingredient_id))
+    conn.commit()
+
+
 def update_ingredient_with_id(ingredient_id, new_name):
     print(ingredient_id, ' > ', new_name)
     sql = "SELECT * FROM ingredients WHERE name=%s LIMIT 1"
@@ -41,11 +48,10 @@ def update_ingredient_with_id(ingredient_id, new_name):
 
 
 # cleansing from csv file
-# with open('cleansed_ingredient_data.csv', newline='') as f:
-#     reader = csv.reader(f)
-#     for item in reader:
-#         update_ingredient(item[0], item[1])
-
+with open('ingredients - Sarah.csv', newline='') as f:
+    reader = csv.reader(f)
+    for item in reader:
+        update_ingredient_with_type(item[0], item[2], item[1])
 
 # general cleansing operations
 cursor.execute("SELECT * FROM ingredients WHERE name <> '' AND name_en = ''")
@@ -244,11 +250,11 @@ for ingredient_row in ingredients:
     cleansed = re.sub(r'am besten.*', '', cleansed)
     cleansed = re.sub(r'bevorzugt.*', '', cleansed)
     cleansed = re.sub(r'vorzugsweise.*', '', cleansed)
-    cleansed = re.sub(r'z\.?B.*', '', cleansed)
-    cleansed = re.sub(r'-$', '', cleansed)
-    cleansed = re.sub(r'^-', '', cleansed)
-    cleansed = re.sub(r'\d+', '', cleansed)
-    cleansed = re.sub(r'%', '', cleansed)
+    #     cleansed = re.sub(r'z\.?B.*', '', cleansed)
+    #     cleansed = re.sub(r'-$', '', cleansed)
+    #     cleansed = re.sub(r'^-', '', cleansed)
+    #     cleansed = re.sub(r'\d+', '', cleansed)
+    #     cleansed = re.sub(r'%', '', cleansed)
 
     # characters and whitespaces
     cleansed = cleansed.replace('"', '')
