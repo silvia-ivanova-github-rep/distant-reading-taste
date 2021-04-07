@@ -41,6 +41,10 @@ for row in result:
     protein = 0.0
     fibre = 0.0
     sodium = 0.0
+    
+    servings = num(row['servings'])
+    if servings == 0:
+        servings = 1
 
     for row2 in result2:
         factor = num(row2['weight']) / 100
@@ -52,6 +56,15 @@ for row in result:
         protein += num(row2['protein']) * factor
         fibre += num(row2['fibre']) * factor
         sodium += num(row2['sodium']) * factor
+
+    energy = energy / servings
+    carbohydrates = carbohydrates / servings
+    fat = fat / servings
+    saturated_fat = saturated_fat / servings
+    sugar = sugar / servings
+    protein = protein / servings
+    fibre = fibre / servings
+    sodium = sodium / servings
 
     # use existing data if available
     if row['energy'] and row['energy'] != '0':
