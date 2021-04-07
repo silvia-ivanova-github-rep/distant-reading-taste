@@ -46,12 +46,13 @@ class RecipePipeline:
             return item
         source_id = self.get_source_id(item.get("source"), item.get("country"))
         category_id = self.get_category_id(item.get('category'))
-        sql = "INSERT INTO recipes(source_id, category_id, title, url) VALUES (%s, %s, %s, %s)"
+        sql = "INSERT INTO recipes(source_id, category_id, title, url, servings) VALUES (%s, %s, %s, %s, %s)"
         self.cursor.execute(sql, (
             source_id,
             category_id,
             item.get("title"),
-            item.get("url")
+            item.get("url"),
+            item.get("servings")
         ))
         self.conn.commit()
         recipe_id = self.cursor.lastrowid

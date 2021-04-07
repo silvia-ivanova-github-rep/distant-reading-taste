@@ -30,5 +30,6 @@ class Recipe(Item):
     category = Field()
     country = Field()
     url = Field()
+    servings = Field()
     ingredients = Field()
     nutrients = Field()

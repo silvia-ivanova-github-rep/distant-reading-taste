@@ -55,6 +55,7 @@ class AllrecipesSpider(CrawlSpider):
         recipe['country'] = 'USA'
         recipe['source'] = 'allrecipes.com'
         recipe['category'] = kwargs['category']
+        recipe['servings'] = '1'
 
         ingredients = []
         for ingredientRow in response.css('section.recipe-ingredients-new li.ingredients-item'):

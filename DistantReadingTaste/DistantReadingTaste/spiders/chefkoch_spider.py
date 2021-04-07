@@ -46,6 +46,8 @@ class ChefkochSpider(CrawlSpider):
         self.logger.info('Processing recipe from {}'.format(response.url))
         recipe = Recipe()
 
+        servings = response.css('div.recipe-servings input[name="portionen"]::attr("value")').get(default='1')
+
         ingredients = []
         for ingredientRow in response.css('table.ingredients tr'):
             ingredient_item = Ingredient()
@@ -99,6 +101,7 @@ class ChefkochSpider(CrawlSpider):
         recipe['ingredients'] = ingredients
         recipe['nutrients'] = nutrients
         recipe['title'] = kwargs['title']
+        recipe['servings'] = servings
         recipe['category'] = kwargs['category']
 
         # process recipe in pipeline
